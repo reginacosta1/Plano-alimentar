@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Cardápio">
+<title>Meu Cardápio · Anna Júlia</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{
+  --g:#2E5339;--gd:#1f3d28;--gl:#e8f4ec;--gt:#2E5339;
+  --ab:#fef3e2;--at:#92400e;
+  --bg:#f4f4f0;--sf:#fff;--tx:#111;--tx2:#555;--tx3:#999;
+  --br:#e8e8e6;--br2:#d0d0cc;
+  --tab:60px;--sb:env(safe-area-inset-bottom,0px);--st:env(safe-area-inset-top,0px);
+}
+@media(prefers-color-scheme:dark){
+  :root{--bg:#111;--sf:#1c1c1e;--tx:#f0f0f0;--tx2:#aaa;--tx3:#666;
+  --br:#2a2a2a;--br2:#3a3a3a;--gl:#1a3325;--ab:#2d1f00;--at:#f6c05c}
+}
+html,body{height:100%;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--tx)}
+body{padding-bottom:calc(var(--tab) + var(--sb) + 16px);padding-top:var(--st)}
+
+/* HEADER */
+.hdr{background:var(--g);color:#fff;padding:14px 16px 12px;position:sticky;top:0;z-index:50}
+.hdr-row{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.hdr h1{font-size:17px;font-weight:700}
+.hdr-sub{font-size:11px;opacity:.7;margin-top:1px}
+.hdr-btns{display:flex;gap:6px}
+.hbtn{background:rgba(255,255,255,.2);border:none;color:#fff;border-radius:10px;padding:6px 11px;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap}
+.hbtn:active{background:rgba(255,255,255,.35)}
+
+/* DAY PANEL */
+#day-panel{background:var(--sf);border-bottom:1px solid var(--br);max-height:0;overflow:hidden;transition:max-height .3s ease}
+#day-panel.open{max-height:500px}
+.day-inner{padding:12px 16px 12px}
+.day-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.day-top h2{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--tx3)}
+.day-top button{font-size:12px;color:var(--tx3);background:none;border:none;cursor:pointer;padding:2px 6px}
+.day-rows{display:flex;flex-direction:column;gap:4px;margin-bottom:10px}
+.day-row{display:flex;align-items:center;gap:8px;background:var(--bg);border-radius:10px;padding:7px 10px}
+.day-row-cat{font-size:11px;font-weight:700;color:var(--tx2);min-width:50px}
+.day-row-name{font-size:13px;color:var(--tx);flex:1;line-height:1.25}
+.swap-btn{background:none;border:1px solid var(--br2);border-radius:8px;padding:3px 9px;font-size:12px;color:var(--tx2);cursor:pointer;white-space:nowrap}
+.day-totals{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.dtot{background:var(--bg);border-radius:10px;padding:5px 10px;font-size:13px;font-weight:700;color:var(--tx)}
+.dtot span{font-size:11px;font-weight:400}
+.pg-ok{color:#2E5339}.pg-warn{color:#d97706}.pg-low{color:#dc2626}
+.day-act{margin-left:auto;display:flex;gap:6px}
+.dbtn{background:none;border:1px solid var(--br2);border-radius:10px;padding:5px 11px;font-size:12px;font-weight:600;color:var(--tx2);cursor:pointer}
+.dbtn.pri{background:var(--g);color:#fff;border-color:var(--g)}
+
+/* TABS */
+.tabs-bar{background:var(--sf);border-bottom:1px solid var(--br);overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;position:sticky;top:0;z-index:40}
+.tabs-bar::-webkit-scrollbar{display:none}
+.tabs-inner{display:flex;padding:0 12px;min-width:max-content}
+.tab{border:none;background:none;padding:10px 14px;font-size:13px;font-weight:600;color:var(--tx2);cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap}
+.tab.on{color:var(--g);border-bottom-color:var(--g)}
+
+/* SORT */
+.sort-bar{padding:10px 16px 6px;display:flex;align-items:center;gap:6px;overflow-x:auto;scrollbar-width:none}
+.sort-bar::-webkit-scrollbar{display:none}
+.slbl{font-size:12px;color:var(--tx3);white-space:nowrap}
+.sbtn{border:1px solid var(--br2);background:none;border-radius:20px;padding:4px 12px;font-size:12px;color:var(--tx2);cursor:pointer;white-space:nowrap}
+.sbtn.on{background:var(--g);color:#fff;border-color:var(--g)}
+
+/* GRID */
+.grid{padding:8px 12px;display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:8px}
+@media(max-width:480px){.grid{grid-template-columns:1fr;padding:6px 10px}}
+.card{background:var(--sf);border:1px solid var(--br);border-radius:14px;padding:12px 14px;cursor:pointer;position:relative;transition:border-color .12s}
+.card:active{transform:scale(.985)}
+.card.sel{border:2px solid var(--g);box-shadow:0 0 0 3px rgba(46,83,57,.1)}
+.card-cat-lbl{font-size:10px;font-weight:700;color:var(--tx3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:3px}
+.card-name{font-size:14px;font-weight:600;line-height:1.3;color:var(--tx);padding-right:30px;margin-bottom:6px}
+.fav-btn{position:absolute;top:10px;right:11px;background:none;border:none;font-size:20px;cursor:pointer;line-height:1;padding:2px}
+.badges{display:flex;flex-wrap:wrap;gap:3px;margin-bottom:7px}
+.bdg{font-size:10px;font-weight:600;padding:2px 7px;border-radius:10px}
+.bw{background:var(--ab);color:var(--at)}
+.bp{background:var(--gl);color:var(--gt)}
+.macros{display:flex;gap:5px;flex-wrap:wrap}
+.mac{font-size:12px;font-weight:600;padding:3px 9px;border-radius:10px}
+.mk{background:var(--bg);color:var(--tx2)}
+.mp{background:var(--gl);color:var(--gt)}
+.mc{background:var(--ab);color:var(--at)}
+.card-hint{font-size:11px;color:var(--tx3);margin-top:7px}
+
+/* FAB */
+.fab{position:fixed;bottom:calc(var(--tab) + var(--sb) + 12px);right:16px;z-index:100;background:var(--g);color:#fff;border:none;border-radius:28px;padding:14px 22px;font-size:15px;font-weight:700;cursor:pointer;box-shadow:0 4px 18px rgba(46,83,57,.4)}
+.fab:active{transform:scale(.95)}
+
+/* BOTTOM NAV */
+.bnav{position:fixed;bottom:0;left:0;right:0;z-index:100;background:var(--sf);border-top:1px solid var(--br);display:flex;padding-bottom:var(--sb)}
+.nbtn{flex:1;display:flex;flex-direction:column;align-items:center;gap:1px;padding:8px 0;border:none;background:none;cursor:pointer;color:var(--tx3);font-size:10px;font-weight:600}
+.nbtn.on{color:var(--g)}
+.ni{font-size:22px;line-height:1.1}
+
+/* MODAL */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;display:none;align-items:flex-end}
+.overlay.open{display:flex}
+.sheet{background:var(--sf);border-radius:20px 20px 0 0;padding:0;width:100%;max-height:88vh;display:flex;flex-direction:column}
+.sheet-handle{width:36px;height:4px;background:var(--br2);border-radius:2px;margin:10px auto 0}
+.sheet-hdr{padding:14px 18px 12px;border-bottom:1px solid var(--br);display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+.sheet-hdr h2{font-size:16px;font-weight:700;line-height:1.3;color:var(--tx);flex:1}
+.close-btn{background:var(--bg);border:none;border-radius:50%;width:32px;height:32px;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;color:var(--tx2)}
+.sheet-body{overflow-y:auto;-webkit-overflow-scrolling:touch;padding:14px 18px;flex:1}
+.sheet-cat{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--tx3);margin-bottom:6px}
+.macros-row{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px}
+.ing-title{font-size:13px;font-weight:700;color:var(--tx);margin-bottom:8px}
+.ing-list{list-style:none;display:flex;flex-direction:column;gap:6px;margin-bottom:14px}
+.ing-list li{font-size:14px;color:var(--tx);padding:9px 12px;background:var(--bg);border-radius:10px;line-height:1.3}
+.ing-list li::before{content:"• ";color:var(--g);font-weight:700}
+.notes-box{background:var(--gl);border-radius:10px;padding:10px 12px;font-size:13px;color:var(--gt);line-height:1.5;margin-bottom:14px}
+.notes-box strong{display:block;margin-bottom:2px;font-size:12px;text-transform:uppercase;letter-spacing:.05em;opacity:.7}
+.link-btn{display:block;text-align:center;background:var(--bg);border:1px solid var(--br2);border-radius:10px;padding:10px;font-size:13px;font-weight:600;color:var(--g);text-decoration:none;margin-bottom:14px}
+.sheet-footer{padding:12px 18px calc(12px + var(--sb));border-top:1px solid var(--br);display:flex;gap:8px}
+.sfbtn{flex:1;padding:13px;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;border:none}
+.sfbtn.sec{background:var(--bg);color:var(--tx2);border:1px solid var(--br2)}
+.sfbtn.pri{background:var(--g);color:#fff}
+
+/* EMPTY */
+.empty{text-align:center;padding:40px 20px;color:var(--tx3)}
+.empty .ico{font-size:40px;margin-bottom:8px}
+.empty p{font-size:14px;line-height:1.5}
+
+/* PRINT */
+@media print{
+  .hdr,.tabs-bar,.sort-bar,.bnav,.fab,#day-panel,.overlay,.hbtn{display:none!important}
+  body{padding:0;background:#fff;color:#000;font-size:12px}
+  .grid{display:block;padding:0}
+  .card{border:1px solid #ccc;border-radius:6px;padding:10px 12px;margin-bottom:8px;page-break-inside:avoid;break-inside:avoid}
+  .card-name{font-size:13px;font-weight:700}
+  .macros{margin-top:4px}
+  .mac{border:1px solid #ccc;border-radius:4px;background:#f5f5f5!important;color:#333!important}
+  .fav-btn{display:none}
+  h2.print-hdr{font-size:16px;font-weight:700;padding:12px 0 6px;border-bottom:2px solid #2E5339;margin-bottom:8px;color:#2E5339}
+  .print-section{margin-bottom:20px}
+}
+</style>
+</head>
+<body>
+
+<div class="hdr">
+  <div class="hdr-row">
+    <div>
+      <h1>🥗 Meu Cardápio</h1>
+      <div class="hdr-sub">Plano da Anna Júlia · Toque para ver a receita</div>
+    </div>
+    <div class="hdr-btns">
+      <button class="hbtn" onclick="toggleDay()">📋 Meu dia</button>
+      <button class="hbtn" onclick="window.print()">🖨️</button>
+    </div>
+  </div>
+</div>
+
+<div id="day-panel">
+  <div class="day-inner">
+    <div class="day-top">
+      <h2>Cardápio de hoje</h2>
+      <button onclick="clearDay()">Limpar ×</button>
+    </div>
+    <div class="day-rows" id="day-rows"></div>
+    <div class="day-totals" id="day-totals"></div>
+  </div>
+</div>
+
+<div class="tabs-bar"><div class="tabs-inner" id="tabs"></div></div>
+<div class="sort-bar">
+  <span class="slbl">Ordenar:</span>
+  <button class="sbtn on" id="s-prot" onclick="setSort('prot')">💪 Proteína</button>
+  <button class="sbtn" id="s-kcal" onclick="setSort('kcal')">🔥 Kcal</button>
+  <button class="sbtn" id="s-nome" onclick="setSort('nome')">A–Z</button>
+</div>
+<div class="grid" id="grid"></div>
+
+<button class="fab" onclick="sortearDia()">🎲 Sortear meu dia</button>
+
+<nav class="bnav" id="bnav"></nav>
+
+<!-- MODAL -->
+<div class="overlay" id="overlay" onclick="maybeClose(event)">
+  <div class="sheet" id="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-hdr">
+      <h2 id="m-name"></h2>
+      <button class="close-btn" onclick="closeModal()">✕</button>
+    </div>
+    <div class="sheet-body" id="m-body"></div>
+    <div class="sheet-footer">
+      <button class="sfbtn sec" id="m-fav-btn" onclick="modalToggleFav()">🤍 Favoritar</button>
+      <button class="sfbtn pri" id="m-sel-btn" onclick="modalSelect()">Selecionar para hoje</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const CATS=['cafe','almoco','lanche','jantar'];
+const LABELS={cafe:'☕ Café',almoco:'🍽 Almoço',lanche:'🥤 Lanche',jantar:'🌙 Jantar'};
+const TABS_CFG=[
+  {key:'cafe',label:'☕ Café'},
+  {key:'almoco',label:'🍽 Almoço'},
+  {key:'lanche',label:'🥤 Lanche'},
+  {key:'jantar',label:'🌙 Jantar'},
+  {key:'favs',label:'❤️ Favoritos'},
+];
+
+const DATA={
+  cafe:[
+    {name:'Toast de ovo',kcal:365,prot:21,carb:30,
+     ing:['1 fatia pão integral (25g) ou ½ pão francês','2 ovos (mexido, cozido, omelete ou falso frito)','1 fatia queijo mussarela (15–20g)','1 col sobremesa requeijão light ou creme de ricota (20g)','1 porção de fruta (ver lista de substituição)'],
+     notes:'Dica da Anna: amasse o ovo cozido com o requeijão + sal + temperinho verde para um patê de ovo gostoso.',
+     link:'https://www.tiktok.com/@nutrijoao/video/7237271494525488389'},
+    {name:'Avocado toast com ovo',kcal:344,prot:18,carb:23,
+     ing:['1 a 2 fatias pão integral (25–50g)','Abacate amassado com limão, sal e pimenta (60g)','2 ovos (preparados com pouca gordura)'],
+     notes:'Torre o pão, espalhe o abacate por cima e complete com o ovo. Simples e muito bom.'},
+    {name:'Panqueca de banana com whey',kcal:270,prot:18,carb:33,
+     ing:['1 ovo','1 banana média amassada (75g)','2 a 3 col sopa farelo de aveia (20–25g)','10g whey protein (colocar na massa)','Opcional: mel (10g), geleia diet (30g) ou pasta de amendoim (12g)'],
+     notes:'Não precisa adoçar — a banana já adoça naturalmente. Canela e cacau em pó são bem-vindos.'},
+    {name:'Toast de frango',kcal:333,prot:23,carb:40,
+     ing:['1 a 2 fatias pão integral (50g) ou 1 pão francês','2 col sopa peito de frango desfiado (40g)','1 fatia queijo mussarela (15g)','1 col sobremesa requeijão light ou creme de ricota (20g)','1 porção de fruta'],
+     notes:'Misture o frango (já pronto e temperado) com o requeijão, coloque no pão, adicione o queijo e coloque na air fryer por 5 minutos para ficar crocante.',
+     link:'https://www.tiktok.com/@fitjady/video/7223029459463539973'},
+    {name:'Torrada com queijo + whey com leite',kcal:369,prot:27,carb:49,
+     ing:['2 fatias pão integral (50g)','1 fatia queijo mussarela (15g)','1 col sobremesa requeijão light (15g)','15g whey protein com 150ml leite desnatado','1 porção de fruta'],
+     notes:'Torrada com queijo + shake de whey + fruta. Pode comer separado ou fazer smoothie misturando tudo.'},
+    {name:'Crepioca salgada da Anna (frango)',kcal:346,prot:19,carb:45,
+     ing:['1 ovo','2 col sopa frango desfiado (30g)','2 col sopa tapioca — goma (30g)','1 col sopa requeijão light ou creme de ricota (30g) para colocar na massa','1 porção de fruta','Sal e temperinhos a gosto'],
+     notes:'Misture ovo, tapioca, sal e frango desfiado. Adicione o creme de ricota em bolinhas e não mexa — assim fica tostado e cremoso na frigideira.',
+     link:'https://www.tiktok.com/@anna.nutri/video/7204825507542879494'},
+    {name:'Crepioca de ovo + clara com queijo',kcal:352,prot:16,carb:45,
+     ing:['1 ovo inteiro + 1 clara','2 col sopa tapioca — goma (30g)','1 fatia queijo mussarela (15–20g)','1 col sobremesa requeijão light (20g)','1 porção de fruta','Temperos: páprica, orégano, sal'],
+     notes:'Misture ovo + tapioca + sal. Adicione o requeijão e o queijo picado na massa crua. Frigideira com fio de azeite, fazer como omelete.',
+     link:'https://www.tiktok.com/@michellecorm/video/7159674586596920581'},
+    {name:'Tapioca recheada com frango',kcal:446,prot:22,carb:70,note:'Até 2×/semana',
+     ing:['3 col sopa tapioca — goma (60g)','2 col sopa frango desfiado (50g) OU 2 ovos inteiros (sem queijo se usar ovo)','1 fatia queijo mussarela (15–20g) — só com frango','1 col sopa creme de ricota light (25g)','1 porção de fruta'],
+     notes:'Opção um pouco mais calórica — limitar a 2x por semana.'},
+    {name:'Toast doce (pasta de amendoim + morango + ovo)',kcal:349,prot:18,carb:30,
+     ing:['2 fatias pão integral (50g)','1 col sopa pasta de amendoim ou doce de leite (15g)','Morangos frescos à vontade','1 ovo','1 fatia queijo mussarela (15g)'],
+     notes:'1 fatia de toast doce com pasta e morango. 1 fatia com ovo e queijo. Uma combinação certeira!'},
+  ],
+  almoco:[
+    {name:'Polenta + carne moída + salada com grão de bico',kcal:452,prot:36,carb:45,
+     ing:['Polenta mole (4–5 col sopa, 140g)','Carne moída magra com molho de tomate (100g)','Salada verde à vontade','Grão de bico (1 col de servir, 50g)'],
+     notes:'A polenta pode ser firme também! Experimente com legumes refogados por cima.'},
+    {name:'Macarrão + carne moída com molho + legumes',kcal:392,prot:34,carb:33,
+     ing:['Macarrão (1 pegador grande, 90g cozido)','Carne moída magra com molho de tomate (100g)','Legumes assados à vontade (abobrinha, berinjela, cenoura)'],
+     notes:'Prefira massas com molho de tomate. Integral ou tradicional — a diferença é pequena, o que importa é ter vegetais na refeição.'},
+    {name:'Aipim + carne de panela + salada',kcal:362,prot:29,carb:32,
+     ing:['Aipim cozido (2–3 pedaços, 80g)','Carne de panela ou carne moída (100g)','Salada de alface e tomate à vontade'],
+     notes:'O aipim pode ser assado na air fryer para ficar crocante. Carne de panela tem muito sabor e combina muito bem.'},
+    {name:'Arroz + feijão + almôndega + moranga refogada',kcal:409,prot:34,carb:38,
+     ing:['Arroz branco ou integral (3–4 col sopa, 70g)','Feijão sem bacon (1 concha, 75g)','Almôndega de carne moída (100g)','Moranga ou abóbora refogada à vontade'],
+     notes:'Clássico e completo. A moranga refogada com alho é deliciosa e adiciona fibras sem quase nenhuma caloria.'},
+    {name:'Arroz + lentilha + hambúrguer + abobrinha com cenoura',kcal:439,prot:37,carb:43,
+     ing:['Arroz branco ou integral (3–4 col sopa, 70g)','Lentilha cozida (75g)','Hambúrguer de carne moída caseiro (100g)','Refogado de abobrinha e cenoura com alho-poró à vontade'],
+     notes:'A lentilha substitui o feijão e tem ainda mais proteína. O hambúrguer pode ser feito em casa sem empanamento.'},
+    {name:'Batata doce assada + sobrecoxa sem pele + legumes',kcal:294,prot:29,carb:24,
+     ing:['Batata doce assada em cubos com alecrim e cominho (4 col sopa, 90g)','Sobrecoxa de frango assada sem pele (1 unidade grande, 100g)','Legumes assados ou crus à vontade'],
+     notes:'Cozinhe a batata, corte em cubos, tempere com azeite + cominho + páprica + sal + alecrim e leve ao forno até dourar.'},
+    {name:'Purê de batata + peixe grelhado + salada de lentilha',kcal:343,prot:41,carb:37,
+     ing:['Batata inglesa para purê (4–6 pedaços, 140g)','Filé de peixe grelhado ou assado (1 filé grande, 120g)','Salada de lentilha fria (75g)'],
+     notes:'Opção excelente para proteína! O peixe branco grelhado com limão e ervas fica muito leve e saboroso.'},
+    {name:'Escondidinho de batata + frango desfiado + espinafre',kcal:283,prot:35,carb:25,
+     ing:['Batata inglesa amassada — estilo purê (140g)','Frango desfiado temperado (100g)','Espinafre e cenoura refogados'],
+     notes:'Monte em camadas: purê, frango desfiado com vegetais, purê. Pode fazer uma versão individual e guardar na geladeira.'},
+    {name:'Arroz com cenoura + carne moída com vagem e milho',kcal:375,prot:31,carb:33,
+     ing:['Arroz com cenoura ralada (3–4 col sopa, 70g)','Carne moída magra com vagem picada e milho (100g + vegetais)'],
+     notes:'Dica da Anna: arroz com cenoura ralada — basta refogar a cenoura ralada junto com o arroz. Fica colorido e nutritivo.'},
+    {name:'Batata rústica + feijão + frango grelhado + salada',kcal:340,prot:39,carb:35,
+     ing:['Batata rústica assada com alecrim (140g)','Feijão (1 concha, 75g)','Frango grelhado em iscas (100g)','Salada de pepino, tomate e cebola'],
+     notes:'Cozinhe a batata, corte em canoas, tempere com azeite + pimenta + cominho + páprica + sal + alecrim e leve ao forno até dourar.'},
+    {name:'Arroz + feijão carioca + omelete com legumes',kcal:332,prot:20,carb:36,
+     ing:['Arroz branco ou integral (3–4 col sopa, 70g)','Feijão carioca (1 concha, 75g)','Omelete com 2 ovos e vegetais variados (seleta, tomate, espinafre)'],
+     notes:'A opção com menor proteína do almoço — compense no lanche ou jantar se precisar bater a meta.'},
+    {name:'Arroz + frango strogonoff leve + feijão + mix assado',kcal:387,prot:41,carb:39,
+     ing:['Arroz multigrãos (3–4 col sopa, 70g)','Frango em iscas com creme de ricota + ketchup — estilo strogonoff leve (100g)','Feijão (1 concha, 75g)','Mix assado de abobrinha, berinjela e cenoura'],
+     notes:'Uma das opções com mais proteína do almoço! O strogonoff leve fica cremoso e satisfatório.'},
+  ],
+  lanche:[
+    {name:'Sanduíche natural com frango',kcal:348,prot:24,carb:42,
+     ing:['2 fatias pão integral (50g) ou 1 pão francês ou 1 Rap10 integral','1 col sopa requeijão light ou creme de ricota (20g)','Salada à gosto (alface, cenoura ralada, tomate cereja, pepino)','2 col sopa frango desfiado (40g) ou 1 ovo cozido + 1 fatia mussarela (15g)','1 porção de fruta'],
+     notes:'Pode deixar o sanduíche pronto por até 48h na geladeira. Faça uma pastinha de frango misturando o requeijão.',
+     link:'https://www.tiktok.com/@nova.janaina/video/7256541354157722886'},
+    {name:'Torta proteica de air fryer',kcal:335,prot:25,carb:28,
+     ing:['1 ovo','2 col sopa frango desfiado (40g)','2 col sopa tapioca — goma (30g)','1 col sopa requeijão light ou creme de ricota (30g)','1 fatia queijo mussarela (15g)'],
+     notes:'Tudo misturado e na air fryer. Simples e muito proteico!',
+     link:'https://www.tiktok.com/@nutrijoao/video/7200115906800864517'},
+    {name:'Pão de queijo saudável',kcal:340,prot:16,carb:37,
+     ing:['2 col sopa tapioca — goma (40g)','1 ovo','20g queijo parmesão ralado ou 1 fatia mussarela (20g)','30g creme de ricota light ou requeijão light'],
+     notes:'Pode fazer na air fryer ou na frigideira. Fica muito parecido com pão de queijo tradicional!',
+     link:'https://www.instagram.com/reel/C485UfCOHdG/'},
+    {name:'Tortinha de milho',kcal:369,prot:24,carb:42,
+     ing:['1 ovo','2 col sopa tapioca (30g)','1 col sopa farelo de aveia (10g)','20g requeijão light','2 col sopa milho em grão (40g)','10g queijo parmesão ralado ou 1 fatia mussarela (15g)','2 col sopa frango desfiado (30g)'],
+     notes:'Sal e temperinhos a gosto. Muito saborosa e fácil de fazer.',
+     link:'https://www.instagram.com/p/CtZYzRWuBpy/'},
+    {name:'Muffin salgado de air fryer',kcal:289,prot:24,carb:26,prep:'Congela bem',
+     ing:['1 ovo','1 col sopa tapioca (20g)','1 col sopa farelo de aveia (10g)','20g queijo mussarela ralado','2 col sopa frango desfiado (40g)','Vegetais: brócolis picado, cenoura ralada, tomate cereja','Sal e tempero a gosto'],
+     notes:'Misture tudo, coloque em forminhas de silicone para cupcake e asse na air fryer. Rende vários! Congele e descongele conforme precisar.',
+     link:'https://www.tiktok.com/@vivianferreiranutri/video/7241566096988327173'},
+    {name:'Magic Toast + frango + requeijão',kcal:302,prot:21,carb:37,
+     ing:['1 pacote Magic Toast integral (25g, 6 unidades)','2–3 col sopa frango desfiado (50g) ou 1 ovo cozido amassado para pastinha','1 col sopa requeijão light (30g)','1 porção de fruta'],
+     notes:'Misture o frango ou ovo amassado no requeijão e coma com as torradinhas. Rápido e prático.'},
+    {name:'Barrinha Move/Love + shake de whey',kcal:117,prot:14,carb:9,
+     ing:['1 barrinha Move ou Love — Harts (40g)','15g whey protein com água ou leite'],
+     notes:'Opção mais leve para quando não tem muito apetite. Bom para dias com treino à tarde também.'},
+    {name:'Barrinha de proteína + fruta',kcal:269,prot:15,carb:38,
+     ing:['1 barrinha de proteína (150–250kcal, mínimo 10g de proteína)','1 banana ou outra porção de fruta'],
+     notes:'Marcas boas: Nutrata, Bold Thin, Absurda da Putz, Amendo Power, WinStage, Pinc Bar, ProteinBar Dux.'},
+    {name:'Pastel de air fryer com frango',kcal:280,prot:22,carb:23,
+     ing:['2 massas médias de pastel (até 120kcal no total)','1 col sopa requeijão light (30g)','2 col sopa frango desfiado ou carne moída (40g)','1 fatia queijo mussarela (15–20g)'],
+     notes:'Divida o recheio entre os dois pastéis. Faz na air fryer e fica crocante sem fritar.',
+     link:'https://www.tiktok.com/@gabiborgesd/video/7426533403706526982'},
+    {name:'Salgado de batata inglesa com frango',kcal:254,prot:25,carb:19,prep:'Congela bem',
+     ing:['150g batata inglesa cozida e amassada','60g peito de frango desfiado (temperadinho)','1 col sobremesa requeijão light (20g)','Opcional: 15g queijo mussarela para rechear','Opcional: 1 col sopa farinha de aveia para dar liga'],
+     notes:'Misture batata amassada + frango + requeijão. Faça bolinhas, recheie com queijo. Pode congelar cru e assar conforme precisar.',
+     link:'https://vt.tiktok.com/ZSx1t1o6F/'},
+    {name:'Toast doce + frango desfiado',kcal:363,prot:26,carb:30,
+     ing:['2 fatias pão integral (50g)','1 col pasta de amendoim ou doce de leite (15g)','Morangos frescos à vontade','40g frango desfiado com 15g requeijão light ou 1 ovo','1 fatia queijo mussarela (15g)'],
+     notes:'1 fatia de toast doce com pasta e morango. 1 fatia salgada com frango/ovo e queijo.'},
+    {name:'Crepioca de banana com mel e queijo',kcal:362,prot:22,carb:49,note:'Até 2×/semana',
+     ing:['1 ovo','2 col sopa tapioca ou 1 tapioca + 1 farelo de aveia','15g whey protein — para polvilhar ou fazer creminho com água','1 fatia mussarela (15g)','1 banana pequena (50g)','Canela a gosto','1 col sobremesa mel (12g)'],
+     notes:'Um pouco mais calórica. Limitar a 2x por semana.'},
+    {name:'Cookie de pote',kcal:303,prot:18,carb:41,prep:'Prep fácil',
+     ing:['2 col sopa aveia em flocos (20g)','1 banana média amassada (75g)','15g whey protein','15g chocolate 70% cacau ou 15g doce de leite (usar a cota de doce do dia)','Leite ou iogurte desnatado a gosto','1 col chá fermento em pó','Opcional: canela + cacau em pó a gosto'],
+     notes:'Misture tudo e coma na hora ou deixe na geladeira. Simples e muito gostoso!',
+     link:'https://www.tiktok.com/@juliaottoni/video/7281407982540164358'},
+    {name:'Overnight oats com whey e fruta',kcal:295,prot:22,carb:41,prep:'Prep noite anterior',
+     ing:['150–200ml leite semidesnatado, desnatado ou vegetal','1 col sopa chia em grãos (10g) — opcional mas ajuda na saciedade','2 col sopa aveia em flocos (15g)','15g whey protein','1 porção de fruta (banana, morango, uva, blueberry...)'],
+     notes:'Misture aveia + chia + leite. Deixe na geladeira a noite toda ou por 3–4h. Coloque a fruta e o whey na hora de comer.',
+     link:'https://www.tiktok.com/@gioaguilera18/video/7189712183629073669'},
+    {name:'Bolinho de microondas 2 (cacau + banana)',kcal:321,prot:29,carb:46,note:'Até 1×/semana',
+     ing:['1 ovo','2 col sopa farelo de aveia (20g)','1 banana média (75g)','1 col sopa cacau em pó (10g)','Adoçante a gosto','1 col chá fermento em pó','Calda: 15g whey + 10g leite em pó desnatado + 5g cacau em pó'],
+     notes:'Passa um pouco as kcal. Reserve para 1x por semana como mimo saboroso e nutritivo.',
+     link:'https://www.instagram.com/reel/Criw-RKsOqG/'},
+    {name:'Banana + whey + leite em pó + chocopops + pasta de amendoim',kcal:380,prot:24,carb:52,
+     ing:['1 banana média amassada (75g)','15g whey protein','15g leite em pó desnatado','30g Chocopops (Harts Nutrition)','15g pasta de amendoim'],
+     notes:'Amasse a banana, misture o whey, leite em pó e pasta de amendoim. Coloque os chocopops por cima. Sem fogo!'},
+    {name:'Iogurte natural + whey + fruta + chocopops',kcal:311,prot:22,carb:49,
+     ing:['1 iogurte natural desnatado (até 170g)','15g whey protein (para adoçar e deixar mais proteico)','1 porção de fruta','30g Chocopops Harts ou 2–3 col sopa granola sem açúcar (Grano Square, Ritter, Jasmine, Mãe Terra)'],
+     notes:'Alternativa: compre iogurte proteico com mínimo 12g de proteína (Moo, Yorgus, YoPro, Do Tambo, Verdes Campos) e não precisa adicionar whey.'},
+  ],
+  jantar:[
+    {name:'Pizza no pão árabe com frango desfiado',kcal:366,prot:35,carb:37,
+     ing:['1 pão sírio/árabe (até 150kcal)','4 col sopa frango desfiado ou carne moída (80g)','3–4 col sopa molho de tomate','20g queijo mussarela','No mínimo 2 vegetais: tomate cereja, milho, espinafre, cenoura, brócolis, abobrinha, palmito...'],
+     notes:'Monte a pizza com pão sírio como base. Leve ao forno a 180°C até o queijo derreter. Fácil, rápido e muito saboroso!'},
+    {name:'Pizza proteica (massa de ovo + aveia)',kcal:319,prot:35,carb:18,
+     ing:['1 ovo','60g frango desfiado','20g farelo de aveia','20g queijo mussarela','1–2 col sopa molho de tomate','15g creme de ricota light','Vegetais a vontade por cima'],
+     link:'https://www.tiktok.com/@eujula/video/7215646644417645829'},
+    {name:'Pizza com massa de crepioca',kcal:452,prot:34,carb:41,
+     ing:['1 ovo + 2 col sopa tapioca (40g) + 1 col sopa requeijão light (25g) — massa','2–3 col sopa molho de tomate','2 fatias finas queijo mussarela (25g)','60g frango desfiado ou carne moída','Vegetais: tomate, espinafre, cenoura ou abobrinha picados'],
+     notes:'Faça a crepioca, adicione o recheio por cima e leve ao forno para derreter o queijo.'},
+    {name:'Hambúrguer caseiro com salada',kcal:431,prot:32,carb:33,
+     ing:['1 pão francês (50g) ou pão de hambúrguer fermentação natural (até 150kcal)','1 col sopa requeijão light ou creme de ricota (30g)','1 fatia queijo mussarela (15–20g)','1 bife de carne moída magra ou frango moído (80g)','Vegetais: mix de folhas, tomate, cebola'],
+     notes:'Monte com requeijão no lugar da maionese — mesmo calorias, muito mais volume!'},
+    {name:'Wrap proteico de frango com salada',kcal:365,prot:37,carb:26,
+     ing:['2 fatias pão integral (50g) ou 1 Rap10 ou 1 pão francês','1 col sopa requeijão light ou creme de ricota (30g)','4 col sopa frango desfiado ou iscas de carne (80g)','1 fatia queijo mussarela (15–20g)','Vegetais: mix de folhas verdes, tomate, cenoura ralada'],
+     notes:'Evite fazer só com queijo e embutidos no jantar — sempre adicione proteína e salada para mais saciedade.'},
+    {name:'Omelete de frango com queijo e legumes',kcal:354,prot:34,carb:14,
+     ing:['2 ovos','2 col sopa frango desfiado (40–50g)','Tomate cereja picadinho','1 fatia queijo mussarela (20g)','Opcional: 1 fatia pão integral (ou tirar o queijo e colocar +1 fatia de pão)','Temperinhos: cebolinha, alho-poró, orégano, manjericão'],
+     notes:'Omelete recheada e completa. Rápida de fazer e com ótima proteína!'},
+    {name:'Salada de macarrão com pesto e frango',kcal:294,prot:30,carb:23,
+     ing:['1 pegador grande macarrão (80g cozido)','Vegetais à vontade (espinafre, tomate cereja, brócolis, folhas)','15g molho pesto ou 20g maionese light + limão/mostarda/ketchup','3–4 col sopa frango grelhado ou desfiado (80g)'],
+     notes:'Pode servir fria (salada de massa) ou quentinha em bowl. A opção mais baixa em kcal do jantar!',
+     link:'https://www.tiktok.com/@nathaliacarnielli/video/7223481176000826629'},
+    {name:'Crepioca recheada de frango com legumes',kcal:409,prot:35,carb:39,
+     ing:['1 ovo','2 col sopa tapioca — goma (40g)','4 col sopa frango desfiado ou carne desfiada (80g)','1 col sopa creme de ricota ou requeijão light (30g)','No mínimo 2 vegetais no recheio (brócolis, cenoura ralada, milho, espinafre)'],
+     notes:'Bata o ovo com a tapioca, coloque na frigideira com fio de azeite em fogo baixo. Recheie com frango + requeijão + vegetais e dobre ao meio.',
+     link:'https://vt.tiktok.com/ZSxadWF4B/'},
+    {name:'Pastel de air fryer com carne moída',kcal:384,prot:26,carb:30,
+     ing:['2–3 massas médias de pastel (até 160kcal no total)','1 col sopa requeijão light (30g)','3 col sopa carne moída ou frango desfiado (60g) — dividir entre os pastéis','1 fatia queijo mussarela (15–20g)'],
+     link:'https://www.tiktok.com/@gabiborgesd/video/7426533403706526982'},
+    {name:'Lasanha individual com frango',kcal:428,prot:43,carb:32,note:'Até 1×/semana',
+     ing:['2 folhas de massa para lasanha (marca Renata — melhor macro)','30g requeijão light ou creme de ricota','100g frango desfiado ou patinho moído','Molho de tomate à vontade','1 fatia queijo mussarela (20g)'],
+     notes:'A opção com mais proteína do jantar! Um pouco mais calórica, então reserve para 1x por semana.',
+     link:'https://vt.tiktok.com/ZSxadWF4B/'},
+  ],
+};
+
+let activeTab='cafe', sortBy='prot';
+let selected={cafe:null,almoco:null,lanche:null,jantar:null};
+let favs=new Set(JSON.parse(localStorage.getItem('r-favs')||'[]'));
+let dayVisible=false;
+let modalCat=null, modalIdx=null;
+
+function saveFavs(){localStorage.setItem('r-favs',JSON.stringify([...favs]));}
+function rand(arr){return arr[Math.floor(Math.random()*arr.length)];}
+
+function sortItems(items){
+  const s=[...items.map((it,i)=>({...it,_i:i}))];
+  if(sortBy==='prot')s.sort((a,b)=>b.prot-a.prot);
+  else if(sortBy==='kcal')s.sort((a,b)=>b.kcal-a.kcal);
+  else s.sort((a,b)=>a.name.localeCompare(b.name,'pt'));
+  return s;
+}
+
+function renderTabs(){
+  document.getElementById('tabs').innerHTML=TABS_CFG.map(t=>
+    `<button class="tab${activeTab===t.key?' on':''}" onclick="setTab('${t.key}')">${t.label}</button>`
+  ).join('');
+}
+
+function renderBnav(){
+  document.getElementById('bnav').innerHTML=TABS_CFG.map(t=>`
+    <button class="nbtn${activeTab===t.key?' on':''}" onclick="setTab('${t.key}')">
+      <span class="ni">${t.label.split(' ')[0]}</span>
+      <span>${t.label.split(' ').slice(1).join(' ')}</span>
+    </button>
+  `).join('');
+}
+
+function renderGrid(){
+  const el=document.getElementById('grid');
+  let items;
+  if(activeTab==='favs'){
+    items=[];
+    CATS.forEach(cat=>DATA[cat].forEach((it,i)=>{
+      if(favs.has(cat+'-'+i))items.push({...it,_cat:cat,_i:i,_multi:true});
+    }));
+  } else {
+    items=sortItems(DATA[activeTab]).map(it=>({...it,_cat:activeTab}));
+  }
+  if(!items.length){
+    el.innerHTML=`<div class="empty"><div class="ico">❤️</div><p>Sem favoritos ainda.<br>Toque no 🤍 em qualquer prato.</p></div>`;
+    return;
+  }
+  el.innerHTML=items.map(it=>{
+    const cat=it._cat, origIdx=it._i!==undefined?it._i:DATA[cat].findIndex(x=>x.name===it.name);
+    const fk=cat+'-'+origIdx;
+    const isFav=favs.has(fk), isSel=selected[cat]&&selected[cat].name===it.name;
+    return `<div class="card${isSel?' sel':''}" onclick="openModal('${cat}',${origIdx})">
+      <button class="fav-btn" onclick="toggleFav(event,'${cat}',${origIdx})">${isFav?'❤️':'🤍'}</button>
+      ${it._multi?`<div class="card-cat-lbl">${LABELS[cat]}</div>`:''}
+      <div class="card-name">${it.name}</div>
+      <div class="badges">
+        ${it.note?`<span class="bdg bw">⚠️ ${it.note}</span>`:''}
+        ${it.prep?`<span class="bdg bp">⏱ ${it.prep}</span>`:''}
+      </div>
+      <div class="macros">
+        <span class="mac mk">🔥 ${it.kcal}</span>
+        <span class="mac mp">💪 ${it.prot}g</span>
+        <span class="mac mc">🌾 ${it.carb}g</span>
+      </div>
+      <div class="card-hint">Toque para ver a receita completa →</div>
+    </div>`;
+  }).join('');
+}
+
+function renderDay(){
+  const p=document.getElementById('day-panel');
+  const filled=CATS.filter(c=>selected[c]);
+  p.className=(filled.length>0||dayVisible)?'open':'';
+  if(!filled.length&&!dayVisible){p.className='';return;}
+  document.getElementById('day-rows').innerHTML=CATS.map(cat=>{
+    const it=selected[cat];
+    if(!it)return `<div class="day-row" style="opacity:.4"><span class="day-row-cat">${LABELS[cat]}</span><span class="day-row-name" style="color:var(--tx3)">Não selecionado</span></div>`;
+    return `<div class="day-row">
+      <span class="day-row-cat">${LABELS[cat]}</span>
+      <span class="day-row-name">${it.name}</span>
+      <button class="swap-btn" onclick="swapMeal('${cat}')">↻</button>
+    </div>`;
+  }).join('');
+  const tK=CATS.reduce((s,c)=>s+(selected[c]?selected[c].kcal:0),0);
+  const tP=CATS.reduce((s,c)=>s+(selected[c]?selected[c].prot:0),0);
+  const tC=CATS.reduce((s,c)=>s+(selected[c]?selected[c].carb:0),0);
+  const pc=tP>=120?'pg-ok':tP>=100?'pg-warn':'pg-low';
+  const pm=tP>=120?'✓ Meta!':tP>=100?`Falta ${120-tP}g`:`${120-tP}g abaixo`;
+  document.getElementById('day-totals').innerHTML=`
+    <div class="dtot">🔥 ${tK} <span>kcal</span></div>
+    <div class="dtot">💪 ${tP}g <span class="${pc}">${pm}</span></div>
+    <div class="dtot">🌾 ${tC}g</div>
+    <div class="day-act">
+      <button class="dbtn" onclick="clearDay()">Limpar</button>
+      <button class="dbtn pri" onclick="sortearDia()">🎲 Novo sorteio</button>
+    </div>`;
+}
+
+function openModal(cat, idx){
+  const it=DATA[cat][idx];
+  modalCat=cat; modalIdx=idx;
+  document.getElementById('m-name').textContent=it.name;
+  const fk=cat+'-'+idx, isFav=favs.has(fk), isSel=selected[cat]&&selected[cat].name===it.name;
+  document.getElementById('m-fav-btn').textContent=isFav?'❤️ Favorito':'🤍 Favoritar';
+  document.getElementById('m-sel-btn').textContent=isSel?'✓ Selecionado para hoje':'Selecionar para hoje';
+  document.getElementById('m-sel-btn').style.background=isSel?'#888':'var(--g)';
+  let html=`<div class="sheet-cat">${LABELS[cat]} · ${it.kcal} kcal</div>`;
+  html+=`<div class="macros-row">
+    <span class="mac mp">💪 ${it.prot}g proteína</span>
+    <span class="mac mc">🌾 ${it.carb}g carb</span>
+    <span class="mac mk">🔥 ${it.kcal} kcal</span>
+  </div>`;
+  if(it.note)html+=`<div class="bdg bw" style="display:inline-block;margin-bottom:10px">⚠️ ${it.note}</div><br>`;
+  if(it.prep)html+=`<div class="bdg bp" style="display:inline-block;margin-bottom:10px">⏱ ${it.prep}</div><br>`;
+  html+=`<div class="ing-title">📋 Ingredientes</div><ul class="ing-list">${(it.ing||[]).map(i=>`<li>${i}</li>`).join('')}</ul>`;
+  if(it.notes)html+=`<div class="notes-box"><strong>Dica</strong>${it.notes}</div>`;
+  if(it.link)html+=`<a class="link-btn" href="${it.link}" target="_blank">📱 Ver modo de preparo (TikTok/Instagram)</a>`;
+  document.getElementById('m-body').innerHTML=html;
+  document.getElementById('overlay').classList.add('open');
+  document.body.style.overflow='hidden';
+}
+
+function closeModal(){
+  document.getElementById('overlay').classList.remove('open');
+  document.body.style.overflow='';
+}
+
+function maybeClose(e){
+  if(e.target===document.getElementById('overlay'))closeModal();
+}
+
+function modalToggleFav(){
+  if(modalCat===null)return;
+  const fk=modalCat+'-'+modalIdx;
+  favs.has(fk)?favs.delete(fk):favs.add(fk);
+  saveFavs();
+  openModal(modalCat,modalIdx);
+  renderGrid();
+}
+
+function modalSelect(){
+  if(modalCat===null)return;
+  const it=DATA[modalCat][modalIdx];
+  selected[modalCat]=selected[modalCat]&&selected[modalCat].name===it.name?null:it;
+  openModal(modalCat,modalIdx);
+  renderGrid();renderDay();
+}
+
+function setTab(t){activeTab=t;renderTabs();renderBnav();renderGrid();}
+
+function setSort(s){
+  sortBy=s;
+  ['prot','kcal','nome'].forEach(x=>document.getElementById('s-'+x).classList.toggle('on',x===s));
+  renderGrid();
+}
+
+function sortearDia(){
+  CATS.forEach(cat=>{selected[cat]=rand(DATA[cat]);});
+  dayVisible=true;renderGrid();renderDay();
+  document.getElementById('day-panel').scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+
+function swapMeal(cat){
+  const cur=selected[cat]; let next;
+  do{next=rand(DATA[cat]);}while(DATA[cat].length>1&&next.name===cur.name);
+  selected[cat]=next;renderGrid();renderDay();
+}
+
+function clearDay(){CATS.forEach(c=>selected[c]=null);dayVisible=false;renderGrid();renderDay();}
+function toggleDay(){dayVisible=!dayVisible;renderDay();if(dayVisible)document.getElementById('day-panel').scrollIntoView({behavior:'smooth',block:'nearest'});}
+
+renderTabs();renderBnav();renderGrid();renderDay();
+</script>
+</body>
+</html>
