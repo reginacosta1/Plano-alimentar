@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Cardápio">
+<title>Meu Cardápio · Anna Júlia</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{--g:#2E5339;--gl:#e8f4ec;--gt:#2E5339;--ab:#fef3e2;--at:#92400e;--bg:#f4f4f0;--sf:#fff;--tx:#111;--tx2:#555;--tx3:#999;--br:#e8e8e6;--br2:#d0d0cc;--tab:60px;--sb:env(safe-area-inset-bottom,0px);--st:env(safe-area-inset-top,0px)}
+@media(prefers-color-scheme:dark){:root{--bg:#111;--sf:#1c1c1e;--tx:#f0f0f0;--tx2:#aaa;--tx3:#666;--br:#2a2a2a;--br2:#3a3a3a;--gl:#1a3325;--ab:#2d1f00;--at:#f6c05c}}
+html,body{height:100%;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--tx)}
+body{padding-bottom:calc(var(--tab) + var(--sb) + 8px);padding-top:var(--st)}
+.hdr{background:var(--g);color:#fff;padding:14px 16px 12px;position:sticky;top:0;z-index:50}
+.hdr-row{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.hdr h1{font-size:17px;font-weight:700}
+.hdr-sub{font-size:11px;opacity:.7;margin-top:1px}
+.hdr-btns{display:flex;gap:6px}
+.hbtn{background:rgba(255,255,255,.2);border:none;color:#fff;border-radius:10px;padding:6px 11px;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap}
+/* DAY PANEL */
+#day-panel{background:var(--sf);border-bottom:1px solid var(--br);max-height:0;overflow:hidden;transition:max-height .3s}
+#day-panel.open{max-height:500px}
+.day-inner{padding:12px 16px}
+.day-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.day-top h2{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--tx3)}
+.day-top button{font-size:12px;color:var(--tx3);background:none;border:none;cursor:pointer}
+.day-rows{display:flex;flex-direction:column;gap:4px;margin-bottom:10px}
+.day-row{display:flex;align-items:center;gap:8px;background:var(--bg);border-radius:10px;padding:7px 10px}
+.day-row-cat{font-size:11px;font-weight:700;color:var(--tx2);min-width:50px}
+.day-row-name{font-size:13px;color:var(--tx);flex:1;line-height:1.25}
+.swap-btn{background:none;border:1px solid var(--br2);border-radius:8px;padding:3px 9px;font-size:12px;color:var(--tx2);cursor:pointer}
+.day-totals{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.dtot{background:var(--bg);border-radius:10px;padding:5px 10px;font-size:13px;font-weight:700;color:var(--tx)}
+.dtot span{font-size:11px;font-weight:400}
+.pg-ok{color:#2E5339}.pg-warn{color:#d97706}.pg-low{color:#dc2626}
+.day-act{margin-left:auto;display:flex;gap:6px}
+.dbtn{background:none;border:1px solid var(--br2);border-radius:10px;padding:5px 11px;font-size:12px;font-weight:600;color:var(--tx2);cursor:pointer}
+.dbtn.pri{background:var(--g);color:#fff;border-color:var(--g)}
+/* TABS */
+.tabs-bar{background:var(--sf);border-bottom:1px solid var(--br);overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;position:sticky;top:0;z-index:40}
+.tabs-bar::-webkit-scrollbar{display:none}
+.tabs-inner{display:flex;padding:0 12px;min-width:max-content}
+.tab{border:none;background:none;padding:10px 14px;font-size:13px;font-weight:600;color:var(--tx2);cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap}
+.tab.on{color:var(--g);border-bottom-color:var(--g)}
+/* SORT */
+.sort-bar{padding:10px 16px 6px;display:flex;align-items:center;gap:6px;overflow-x:auto;scrollbar-width:none}
+.sort-bar::-webkit-scrollbar{display:none}
+.slbl{font-size:12px;color:var(--tx3);white-space:nowrap}
+.sbtn{border:1px solid var(--br2);background:none;border-radius:20px;padding:4px 12px;font-size:12px;color:var(--tx2);cursor:pointer;white-space:nowrap}
+.sbtn.on{background:var(--g);color:#fff;border-color:var(--g)}
+/* GRID */
+.grid{padding:8px 12px;display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:8px}
+@media(max-width:480px){.grid{grid-template-columns:1fr;padding:6px 10px}}
+.card{background:var(--sf);border:1px solid var(--br);border-radius:14px;padding:12px 14px;cursor:pointer;position:relative}
+.card:active{transform:scale(.985)}
+.card.sel{border:2px solid var(--g);box-shadow:0 0 0 3px rgba(46,83,57,.1)}
+.card-cat-lbl{font-size:10px;font-weight:700;color:var(--tx3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:3px}
+.card-name{font-size:14px;font-weight:600;line-height:1.3;color:var(--tx);padding-right:30px;margin-bottom:6px}
+.fav-btn{position:absolute;top:10px;right:11px;background:none;border:none;font-size:20px;cursor:pointer;line-height:1;padding:2px}
+.badges{display:flex;flex-wrap:wrap;gap:3px;margin-bottom:7px}
+.bdg{font-size:10px;font-weight:600;padding:2px 7px;border-radius:10px}
+.bw{background:var(--ab);color:var(--at)}.bp{background:var(--gl);color:var(--gt)}
+.macros{display:flex;gap:5px;flex-wrap:wrap}
+.mac{font-size:12px;font-weight:600;padding:3px 9px;border-radius:10px}
+.mk{background:var(--bg);color:var(--tx2)}.mp{background:var(--gl);color:var(--gt)}.mc{background:var(--ab);color:var(--at)}
+.card-hint{font-size:11px;color:var(--tx3);margin-top:7px}
+/* FAB */
+.fab{position:fixed;bottom:calc(var(--tab) + var(--sb) + 12px);right:16px;z-index:100;background:var(--g);color:#fff;border:none;border-radius:28px;padding:14px 22px;font-size:15px;font-weight:700;cursor:pointer;box-shadow:0 4px 18px rgba(46,83,57,.4)}
+.fab:active{transform:scale(.95)}
+/* BOTTOM NAV */
+.bnav{position:fixed;bottom:0;left:0;right:0;z-index:100;background:var(--sf);border-top:1px solid var(--br);display:flex;padding-bottom:var(--sb)}
+.nbtn{flex:1;display:flex;flex-direction:column;align-items:center;gap:1px;padding:8px 0;border:none;background:none;cursor:pointer;color:var(--tx3);font-size:10px;font-weight:600}
+.nbtn.on{color:var(--g)}
+.ni{font-size:22px;line-height:1.1}
+/* RECIPE MODAL */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;display:none;align-items:flex-end}
+.overlay.open{display:flex}
+.sheet{background:var(--sf);border-radius:20px 20px 0 0;width:100%;max-height:88vh;display:flex;flex-direction:column}
+.sheet-handle{width:36px;height:4px;background:var(--br2);border-radius:2px;margin:10px auto 0}
+.sheet-hdr{padding:14px 18px 12px;border-bottom:1px solid var(--br);display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+.sheet-hdr h2{font-size:16px;font-weight:700;line-height:1.3;color:var(--tx);flex:1}
+.close-btn{background:var(--bg);border:none;border-radius:50%;width:32px;height:32px;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;color:var(--tx2)}
+.sheet-body{overflow-y:auto;-webkit-overflow-scrolling:touch;padding:14px 18px;flex:1}
+.sheet-cat{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--tx3);margin-bottom:6px}
+.macros-row{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px}
+.ing-title{font-size:13px;font-weight:700;color:var(--tx);margin-bottom:8px}
+.ing-list{list-style:none;display:flex;flex-direction:column;gap:6px;margin-bottom:14px}
+.ing-list li{font-size:14px;color:var(--tx);padding:9px 12px;background:var(--bg);border-radius:10px;line-height:1.3}
+.ing-list li::before{content:"• ";color:var(--g);font-weight:700}
+.notes-box{background:var(--gl);border-radius:10px;padding:10px 12px;font-size:13px;color:var(--gt);line-height:1.5;margin-bottom:14px}
+.notes-box strong{display:block;margin-bottom:2px;font-size:12px;text-transform:uppercase;letter-spacing:.05em;opacity:.7}
+.link-btn{display:block;text-align:center;background:var(--bg);border:1px solid var(--br2);border-radius:10px;padding:10px;font-size:13px;font-weight:600;color:var(--g);text-decoration:none;margin-bottom:14px}
+.sheet-footer{padding:12px 18px calc(12px + var(--sb));border-top:1px solid var(--br);display:flex;gap:8px}
+.sfbtn{flex:1;padding:13px;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;border:none}
+.sfbtn.sec{background:var(--bg);color:var(--tx2);border:1px solid var(--br2)}
+.sfbtn.pri{background:var(--g);color:#fff}
+/* EMPTY */
+.empty{text-align:center;padding:40px 20px;color:var(--tx3)}
+.empty .ico{font-size:40px;margin-bottom:8px}
+.empty p{font-size:14px;line-height:1.5}
+.view-hidden{display:none!important}
+.diary-wrap{padding:12px 14px;display:flex;flex-direction:column;gap:10px;padding-bottom:80px}
+.diary-date-nav{display:flex;align-items:center;justify-content:space-between;background:var(--sf);border-radius:14px;padding:10px 14px;border:1px solid var(--br)}
+.diary-date-label{font-size:16px;font-weight:700;color:var(--tx);text-align:center;flex:1}
+.diary-date-sub{font-size:11px;color:var(--tx3);text-align:center;margin-top:1px}
+.dnav-btn{background:none;border:none;font-size:22px;cursor:pointer;color:var(--tx2);padding:4px 10px;border-radius:8px}
+.dnav-btn:active{background:var(--bg)}
+.dsec{background:var(--sf);border-radius:14px;padding:14px;border:1px solid var(--br)}
+.dsec-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--tx3);margin-bottom:12px;display:flex;align-items:center;gap:6px}
+/* water */
+.water-row{display:flex;align-items:center;justify-content:space-between}
+.water-display{display:flex;align-items:baseline;gap:3px}
+.water-val{font-size:32px;font-weight:700;color:var(--g);line-height:1}
+.water-unit{font-size:14px;color:var(--tx2);font-weight:500}
+.water-btns{display:flex;gap:8px}
+.wbtn{width:44px;height:44px;border-radius:50%;border:none;font-size:24px;cursor:pointer;background:var(--gl);color:var(--g);font-weight:700;display:flex;align-items:center;justify-content:center}
+.wbtn:active{transform:scale(.92)}
+.water-bar-wrap{margin-top:10px;background:var(--bg);border-radius:6px;height:6px;overflow:hidden}
+.water-bar{height:100%;background:var(--g);border-radius:6px;transition:width .3s}
+/* meal slots */
+.meal-slots{display:flex;flex-direction:column;gap:0}
+.mslot{display:flex;align-items:flex-start;gap:10px;padding:11px 0;border-bottom:1px solid var(--br);cursor:pointer}
+.mslot:last-child{border-bottom:none;padding-bottom:0}
+.mslot:active{opacity:.7}
+.mslot-cat{font-size:10px;font-weight:700;color:var(--tx3);text-transform:uppercase;letter-spacing:.04em;min-width:50px;padding-top:3px}
+.mslot-body{flex:1}
+.mslot-empty{font-size:13px;color:var(--tx3);display:flex;align-items:center;gap:6px;padding:4px 0}
+.mslot-plus{width:22px;height:22px;border-radius:50%;background:var(--bg);border:1.5px dashed var(--br2);display:flex;align-items:center;justify-content:center;font-size:14px;color:var(--tx3);flex-shrink:0}
+.mslot-name{font-size:14px;font-weight:600;color:var(--tx);line-height:1.3;margin-bottom:4px}
+.mslot-macros{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:5px}
+.luxo-tag{display:inline-block;font-size:10px;font-weight:700;background:var(--ab);color:var(--at);padding:1px 6px;border-radius:8px;margin-bottom:4px}
+.mslot-photo{width:56px;height:56px;border-radius:10px;object-fit:cover;flex-shrink:0;margin-top:2px}
+/* mood */
+.mood-row{display:flex;gap:8px}
+.mood-btn{flex:1;padding:12px 6px;border-radius:12px;border:2px solid var(--br);background:none;font-size:26px;cursor:pointer;text-align:center}
+.mood-btn span{display:block;font-size:10px;font-weight:600;color:var(--tx2);margin-top:3px}
+.mood-btn.on{border-color:var(--g);background:var(--gl)}
+.mood-btn.on span{color:var(--g)}
+/* note */
+.diary-note{width:100%;border:none;background:var(--bg);border-radius:10px;padding:10px 12px;font-size:14px;color:var(--tx);font-family:inherit;resize:none;min-height:72px;outline:none;line-height:1.5}
+/* weekly */
+.week-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;text-align:center}
+.wday{display:flex;flex-direction:column;align-items:center;gap:3px}
+.wday-lbl{font-size:9px;font-weight:700;color:var(--tx3);text-transform:uppercase}
+.wdot{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700}
+.wdot.ok{background:var(--gl);color:var(--g)}
+.wdot.warn{background:#fef3e2;color:#d97706}
+.wdot.low{background:#fce8e8;color:#dc2626}
+.wdot.none{background:var(--bg);color:var(--tx3)}
+.wdot.today{box-shadow:0 0 0 2.5px var(--g)}
+.wday-prot{font-size:9px;color:var(--tx3);font-weight:600}
+/* DIARY MEAL MODAL */
+.dm-tabs{display:flex;border:1px solid var(--br);border-radius:10px;overflow:hidden;margin-bottom:14px}
+.dm-tab{flex:1;padding:9px;text-align:center;font-size:13px;font-weight:600;cursor:pointer;background:none;border:none;color:var(--tx2)}
+.dm-tab.on{background:var(--g);color:#fff}
+.dm-plan-list{display:flex;flex-direction:column;gap:6px;max-height:38vh;overflow-y:auto;-webkit-overflow-scrolling:touch}
+.dm-item{padding:10px 12px;background:var(--bg);border-radius:10px;cursor:pointer;border:2px solid transparent}
+.dm-item.on{border-color:var(--g);background:var(--gl)}
+.dm-item:active{opacity:.7}
+.dm-item-name{font-size:13px;font-weight:600;color:var(--tx);margin-bottom:2px}
+.dm-item-macs{font-size:11px;color:var(--tx2)}
+.dm-form{display:flex;flex-direction:column;gap:10px}
+.dm-inp{width:100%;border:1px solid var(--br2);background:var(--bg);border-radius:10px;padding:10px 12px;font-size:14px;color:var(--tx);font-family:inherit;outline:none}
+.dm-inp:focus{border-color:var(--g)}
+.dm-row2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.dm-photo-btn{width:100%;padding:12px;border:2px dashed var(--br2);border-radius:10px;background:none;color:var(--tx2);font-size:13px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;margin-top:4px}
+.dm-preview{width:100%;height:120px;object-fit:cover;border-radius:10px;margin-top:8px;display:none}
+.dm-clear{width:100%;padding:10px;border:1px solid #fca5a5;border-radius:10px;background:none;color:#dc2626;font-size:13px;font-weight:600;cursor:pointer;margin-top:6px}
+</style>
+</head>
+<body>
+
+<!-- ===== CARDÁPIO VIEW ===== -->
+<div id="view-cardapio">
+  <div class="hdr">
+    <div class="hdr-row">
+      <div><h1>🥗 Meu Cardápio</h1><div class="hdr-sub">Plano da Anna Júlia · Toque para ver a receita</div></div>
+      <div class="hdr-btns"><button class="hbtn" onclick="toggleDay()">📋 Meu dia</button><button class="hbtn" onclick="window.print()">🖨️</button></div>
+    </div>
+  </div>
+  <div id="day-panel"><div class="day-inner"><div class="day-top"><h2>Cardápio de hoje</h2><button onclick="clearDay()">Limpar ×</button></div><div class="day-rows" id="day-rows"></div><div class="day-totals" id="day-totals"></div></div></div>
+  <div class="tabs-bar"><div class="tabs-inner" id="tabs"></div></div>
+  <div class="sort-bar"><span class="slbl">Ordenar:</span><button class="sbtn on" id="s-prot" onclick="setSort('prot')">💪 Proteína</button><button class="sbtn" id="s-kcal" onclick="setSort('kcal')">🔥 Kcal</button><button class="sbtn" id="s-nome" onclick="setSort('nome')">A–Z</button></div>
+  <div class="grid" id="grid"></div>
+  <button class="fab" onclick="sortearDia()">🎲 Sortear meu dia</button>
+</div>
+
+<!-- ===== DIÁRIO VIEW ===== -->
+<div id="view-diario" class="view-hidden">
+  <div class="hdr">
+    <div class="hdr-row">
+      <div><h1>📖 Diário</h1><div class="hdr-sub">Registre o que você comeu</div></div>
+    </div>
+  </div>
+  <div class="diary-wrap">
+    <!-- date nav -->
+    <div class="diary-date-nav">
+      <button class="dnav-btn" onclick="navigateDay(-1)">‹</button>
+      <div>
+        <div class="diary-date-label" id="d-label">Hoje</div>
+        <div class="diary-date-sub" id="d-sub"></div>
+      </div>
+      <button class="dnav-btn" onclick="navigateDay(1)" id="d-next">›</button>
+    </div>
+    <!-- weekly -->
+    <div class="dsec">
+      <div class="dsec-title">📅 Últimos 7 dias — proteína</div>
+      <div class="week-grid" id="week-grid"></div>
+    </div>
+    <!-- water -->
+    <div class="dsec">
+      <div class="dsec-title">💧 Água</div>
+      <div class="water-row">
+        <div class="water-display"><span class="water-val" id="water-val">0</span><span class="water-unit">L</span></div>
+        <div class="water-btns">
+          <button class="wbtn" onclick="updateWater(-0.25)">−</button>
+          <button class="wbtn" onclick="updateWater(0.25)">+</button>
+        </div>
+      </div>
+      <div class="water-bar-wrap"><div class="water-bar" id="water-bar" style="width:0%"></div></div>
+    </div>
+    <!-- meals -->
+    <div class="dsec">
+      <div class="dsec-title">🍽 Refeições</div>
+      <div class="meal-slots" id="d-meals"></div>
+    </div>
+    <!-- mood -->
+    <div class="dsec">
+      <div class="dsec-title">🧠 Como me senti hoje?</div>
+      <div class="mood-row">
+        <button class="mood-btn" id="mood-😊" onclick="setMood('😊')">😊<span>Bem saciada</span></button>
+        <button class="mood-btn" id="mood-😐" onclick="setMood('😐')">😐<span>Neutro</span></button>
+        <button class="mood-btn" id="mood-😔" onclick="setMood('😔')">😔<span>Com fome</span></button>
+      </div>
+    </div>
+    <!-- note -->
+    <div class="dsec">
+      <div class="dsec-title">📝 Nota do dia</div>
+      <textarea class="diary-note" id="d-note" placeholder="Algo que quer lembrar sobre hoje... como foi o treino, se estava no período, se comeu fora..." onblur="saveNote()"></textarea>
+    </div>
+  </div>
+</div>
+
+<!-- BOTTOM NAV -->
+<nav class="bnav">
+  <button class="nbtn on" id="nb-cardapio" onclick="setMainView('cardapio')"><span class="ni">🥗</span><span>Cardápio</span></button>
+  <button class="nbtn" id="nb-diario" onclick="setMainView('diario')"><span class="ni">📖</span><span>Diário</span></button>
+</nav>
+
+<!-- RECIPE MODAL -->
+<div class="overlay" id="overlay-recipe" onclick="maybeCloseRecipe(event)">
+  <div class="sheet"><div class="sheet-handle"></div><div class="sheet-hdr"><h2 id="m-name"></h2><button class="close-btn" onclick="closeRecipe()">✕</button></div><div class="sheet-body" id="m-body"></div><div class="sheet-footer"><button class="sfbtn sec" id="m-fav-btn" onclick="modalToggleFav()">🤍 Favoritar</button><button class="sfbtn pri" id="m-sel-btn" onclick="modalSelect()">Selecionar para hoje</button></div></div>
+</div>
+
+<!-- DIARY MEAL MODAL -->
+<div class="overlay" id="overlay-dm" onclick="maybeCloseDm(event)">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-hdr"><h2 id="dm-title">Registrar refeição</h2><button class="close-btn" onclick="closeDm()">✕</button></div>
+    <div class="sheet-body">
+      <div class="dm-tabs">
+        <button class="dm-tab on" id="dm-tab-plan" onclick="setDmTab('plan')">📋 Do plano</button>
+        <button class="dm-tab" id="dm-tab-luxo" onclick="setDmTab('luxo')">✨ Refeição luxo</button>
+      </div>
+      <div id="dm-plan-content"><div class="dm-plan-list" id="dm-plan-list"></div></div>
+      <div id="dm-luxo-content" style="display:none">
+        <div class="dm-form">
+          <input class="dm-inp" id="dm-luxo-name" placeholder="O que você comeu? (ex: Pizza, Almoço no restaurante...)" type="text">
+          <div class="dm-row2">
+            <input class="dm-inp" id="dm-luxo-kcal" placeholder="Kcal (opcional)" type="number" inputmode="numeric">
+            <input class="dm-inp" id="dm-luxo-prot" placeholder="Proteína g (opcional)" type="number" inputmode="numeric">
+          </div>
+        </div>
+      </div>
+      <input type="file" accept="image/*" id="dm-photo-input" style="display:none" onchange="handleDmPhoto(this)">
+      <button class="dm-photo-btn" onclick="document.getElementById('dm-photo-input').click()"><span id="dm-photo-label">📷 Adicionar foto do prato</span></button>
+      <img class="dm-preview" id="dm-preview" src="" alt="foto">
+      <button class="dm-clear" id="dm-clear-btn" onclick="clearDiaryMeal()" style="display:none">🗑 Limpar esta refeição</button>
+    </div>
+    <div class="sheet-footer"><button class="sfbtn pri" onclick="saveDiaryMeal()">Salvar</button></div>
+  </div>
+</div>
+
+<script>
+const CATS=['cafe','almoco','lanche','jantar'];
+const LABELS={cafe:'☕ Café',almoco:'🍽 Almoço',lanche:'🥤 Lanche',jantar:'🌙 Jantar'};
+const TABS_CFG=[{key:'cafe',label:'☕ Café'},{key:'almoco',label:'🍽 Almoço'},{key:'lanche',label:'🥤 Lanche'},{key:'jantar',label:'🌙 Jantar'},{key:'favs',label:'❤️ Favoritos'}];
+const WEEKDAYS=['D','S','T','Q','Q','S','S'];
+const FRUIT_LIST=[
+'Abacate — 1 col. sopa (32g)',
+'Abacaxi — 1 fatia grande (130g)',
+'Ameixa-preta seca — 3 unidades (30g)',
+'Ameixa-vermelha — 4 unidades (130g)',
+'Banana — 1 unidade (80g)',
+'Damasco seco — 4 unidades (30g)',
+'Goiaba — meia unidade (95g)',
+'Kiwi — 2 unidades (154g)',
+'Laranja — 1 unidade (140g)',
+'Maçã — 1 unidade (130g)',
+'Mamão Formosa — 1 fatia (160g) ou Mamão Papaia — ½ unidade (140g)',
+'Manga — 1 unidade (110g)',
+'Maracujá (suco puro) — ½ xícara (94g)',
+'Melancia — 2 fatias (296g)',
+'Melão — 2 fatias (230g)',
+'Morango — 10 unidades (240g)',
+'Nectarina — 2 unidades (184g)',
+'Pêra — 1 unidade (133g)',
+'Pêssego — 2 unidades (226g)',
+'Salada de frutas (banana, maçã, laranja e mamão) — ½ xícara (125g)',
+'Uva comum — 22 unidades (100g) ou Uva Itália — 8 uvas (100g) ou Uva passa — 1 col. sopa (17g) ou Uva Rubi — 8 uvas (100g)',
+];
+
+const DATA={
+cafe:[
+{name:'Toast de ovo',kcal:365,prot:21,carb:30,ing:['1 fatia pão integral (25g) ou ½ pão francês','2 ovos (mexido, cozido, omelete ou falso frito)','1 fatia queijo mussarela (15–20g)','1 col sobremesa requeijão light ou creme de ricota (20g)','1 porção de fruta'],notes:'Dica da Anna: amasse o ovo cozido com o requeijão + sal + temperinho verde para um patê de ovo.',link:'https://www.tiktok.com/@nutrijoao/video/7237271494525488389'},
+{name:'Avocado toast com ovo',kcal:344,prot:18,carb:23,ing:['1–2 fatias pão integral (25–50g)','Abacate amassado com limão, sal e pimenta (60g)','2 ovos (com pouca gordura)'],notes:'Torre o pão, espalhe o abacate por cima e complete com o ovo.'},
+{name:'Panqueca de banana com whey',kcal:270,prot:18,carb:33,ing:['1 ovo','1 banana média amassada (75g)','2–3 col sopa farelo de aveia (20–25g)','10g whey protein na massa','Opcional: mel (10g), geleia diet ou pasta de amendoim (12g)'],notes:'Não precisa adoçar — a banana já adoça. Canela e cacau em pó são bem-vindos.'},
+{name:'Toast de frango',kcal:333,prot:23,carb:40,ing:['1–2 fatias pão integral (50g) ou 1 pão francês','2 col sopa frango desfiado (40g)','1 fatia queijo mussarela (15g)','1 col sobremesa requeijão light (20g)','1 porção de fruta'],notes:'Misture o frango com o requeijão, coloque no pão, adicione o queijo e air fryer por 5 min.',link:'https://www.tiktok.com/@fitjady/video/7223029459463539973'},
+{name:'Torrada com queijo + whey com leite',kcal:369,prot:27,carb:49,ing:['2 fatias pão integral (50g)','1 fatia queijo mussarela (15g)','1 col sobremesa requeijão light (15g)','15g whey protein com 150ml leite desnatado','1 porção de fruta'],notes:'Torrada + shake de whey + fruta. Pode comer separado ou fazer smoothie.'},
+{name:'Crepioca salgada da Anna (frango)',kcal:346,prot:19,carb:45,ing:['1 ovo','2 col sopa frango desfiado (30g)','2 col sopa tapioca/goma (30g)','1 col sopa requeijão light (30g)','1 porção de fruta','Sal e temperinhos a gosto'],notes:'Misture ovo, tapioca, sal e frango. Adicione o creme de ricota em bolinhas sem mexer.',link:'https://www.tiktok.com/@anna.nutri/video/7204825507542879494'},
+{name:'Crepioca de ovo + clara com queijo',kcal:352,prot:16,carb:45,ing:['1 ovo inteiro + 1 clara','2 col sopa tapioca/goma (30g)','1 fatia queijo mussarela (15–20g)','1 col sobremesa requeijão light (20g)','1 porção de fruta'],notes:'Misture ovo + tapioca + sal. Adicione requeijão e queijo picado na massa crua.',link:'https://www.tiktok.com/@michellecorm/video/7159674586596920581'},
+{name:'Tapioca recheada com frango',kcal:446,prot:22,carb:70,note:'Até 2×/semana',ing:['3 col sopa tapioca/goma (60g)','2 col sopa frango desfiado (50g) OU 2 ovos','1 fatia queijo mussarela (15–20g) — só com frango','1 col sopa creme de ricota light (25g)','1 porção de fruta'],notes:'Opção mais calórica — limitar a 2x por semana.'},
+{name:'Toast doce (pasta de amendoim + morango)',kcal:349,prot:18,carb:30,ing:['2 fatias pão integral (50g)','1 col sopa pasta de amendoim ou doce de leite (15g)','Morangos frescos à vontade','1 ovo','1 fatia queijo mussarela (15g)'],notes:'1 fatia doce com pasta e morango. 1 fatia com ovo e queijo.'},
+],
+almoco:[
+{name:'Polenta + carne moída + salada com grão de bico',kcal:452,prot:36,carb:45,ing:['Polenta mole (4–5 col sopa, 140g)','Carne moída magra com molho de tomate (100g)','Salada verde à vontade','Grão de bico (1 col de servir, 50g)'],notes:'A polenta pode ser firme também!'},
+{name:'Macarrão + carne moída com molho + legumes',kcal:392,prot:34,carb:33,ing:['Macarrão (1 pegador grande, 90g cozido)','Carne moída magra com molho de tomate (100g)','Legumes assados à vontade'],notes:'Prefira molho de tomate. O que importa é ter vegetais na refeição.'},
+{name:'Aipim + carne de panela + salada',kcal:362,prot:29,carb:32,ing:['Aipim cozido (2–3 pedaços, 80g)','Carne de panela ou carne moída (100g)','Salada de alface e tomate à vontade'],notes:'O aipim pode ser assado na air fryer para ficar crocante.'},
+{name:'Arroz + feijão + almôndega + moranga refogada',kcal:409,prot:34,carb:38,ing:['Arroz branco ou integral (3–4 col sopa, 70g)','Feijão sem bacon (1 concha, 75g)','Almôndega de carne moída (100g)','Moranga ou abóbora refogada à vontade'],notes:'Clássico e completo. A moranga adiciona fibras sem quase nenhuma caloria.'},
+{name:'Arroz + lentilha + hambúrguer + abobrinha com cenoura',kcal:439,prot:37,carb:43,ing:['Arroz branco ou integral (3–4 col sopa, 70g)','Lentilha cozida (75g)','Hambúrguer de carne moída caseiro (100g)','Refogado de abobrinha e cenoura à vontade'],notes:'A lentilha tem ainda mais proteína que o feijão.'},
+{name:'Batata doce assada + sobrecoxa sem pele + legumes',kcal:294,prot:29,carb:24,ing:['Batata doce em cubos com alecrim e cominho (90g)','Sobrecoxa assada sem pele (1 unidade, 100g)','Legumes assados ou crus à vontade'],notes:'Tempere a batata com azeite + cominho + páprica + sal + alecrim.'},
+{name:'Purê de batata + peixe grelhado + salada de lentilha',kcal:343,prot:41,carb:37,ing:['Batata inglesa para purê (140g)','Filé de peixe grelhado ou assado (120g)','Salada de lentilha fria (75g)'],notes:'Opção com mais proteína do almoço!'},
+{name:'Escondidinho de batata + frango desfiado + espinafre',kcal:283,prot:35,carb:25,ing:['Batata inglesa amassada estilo purê (140g)','Frango desfiado temperado (100g)','Espinafre e cenoura refogados'],notes:'Monte em camadas: purê, frango com vegetais, purê.'},
+{name:'Arroz com cenoura + carne moída com vagem e milho',kcal:375,prot:31,carb:33,ing:['Arroz com cenoura ralada (3–4 col sopa, 70g)','Carne moída magra com vagem picada e milho (100g)'],notes:'Arroz com cenoura ralada — basta refogar a cenoura junto com o arroz.'},
+{name:'Batata rústica + feijão + frango grelhado + salada',kcal:340,prot:39,carb:35,ing:['Batata rústica assada com alecrim (140g)','Feijão (1 concha, 75g)','Frango grelhado em iscas (100g)','Salada de pepino, tomate e cebola'],notes:'Corte a batata em canoas, tempere e leve ao forno.'},
+{name:'Arroz + feijão carioca + omelete com legumes',kcal:332,prot:20,carb:36,ing:['Arroz branco ou integral (3–4 col sopa, 70g)','Feijão carioca (1 concha, 75g)','Omelete com 2 ovos e vegetais variados'],notes:'Opção com menor proteína — compense no lanche ou jantar.'},
+{name:'Arroz + frango strogonoff leve + feijão + mix assado',kcal:387,prot:41,carb:39,ing:['Arroz multigrãos (3–4 col sopa, 70g)','Frango em iscas com creme de ricota + ketchup (100g)','Feijão (1 concha, 75g)','Mix assado de abobrinha, berinjela e cenoura'],notes:'Uma das opções com mais proteína do almoço!'},
+],
+lanche:[
+{name:'Sanduíche natural com frango',kcal:348,prot:24,carb:42,ing:['2 fatias pão integral (50g) ou 1 pão francês ou 1 Rap10','1 col sopa requeijão light (20g)','Salada à gosto','2 col sopa frango desfiado (40g) + 1 fatia mussarela (15g)','1 porção de fruta'],notes:'Pode deixar pronto por até 48h na geladeira.',link:'https://www.tiktok.com/@nova.janaina/video/7256541354157722886'},
+{name:'Torta proteica de air fryer',kcal:335,prot:25,carb:28,ing:['1 ovo','2 col sopa frango desfiado (40g)','2 col sopa tapioca/goma (30g)','1 col sopa requeijão light (30g)','1 fatia queijo mussarela (15g)'],link:'https://www.tiktok.com/@nutrijoao/video/7200115906800864517'},
+{name:'Pão de queijo saudável',kcal:340,prot:16,carb:37,ing:['2 col sopa tapioca/goma (40g)','1 ovo','20g queijo parmesão ralado ou 1 fatia mussarela','30g creme de ricota light ou requeijão'],link:'https://www.instagram.com/reel/C485UfCOHdG/'},
+{name:'Tortinha de milho',kcal:369,prot:24,carb:42,ing:['1 ovo','2 col sopa tapioca (30g)','1 col sopa farelo de aveia (10g)','20g requeijão light','2 col sopa milho (40g)','10g queijo parmesão ou 1 fatia mussarela','2 col sopa frango desfiado (30g)'],link:'https://www.instagram.com/p/CtZYzRWuBpy/'},
+{name:'Muffin salgado de air fryer',kcal:289,prot:24,carb:26,prep:'Congela bem',ing:['1 ovo','1 col sopa tapioca (20g)','1 col sopa farelo de aveia (10g)','20g queijo mussarela ralado','2 col sopa frango desfiado (40g)','Vegetais: brócolis, cenoura, tomate cereja'],notes:'Forminhas de silicone na air fryer. Congele e descongele conforme precisar.',link:'https://www.tiktok.com/@vivianferreiranutri/video/7241566096988327173'},
+{name:'Magic Toast + frango + requeijão',kcal:302,prot:21,carb:37,ing:['1 pacote Magic Toast integral (25g)','2–3 col sopa frango desfiado (50g) ou 1 ovo cozido amassado','1 col sopa requeijão light (30g)','1 porção de fruta'],notes:'Misture o frango no requeijão e coma com as torradinhas.'},
+{name:'Barrinha Move/Love + shake de whey',kcal:117,prot:14,carb:9,ing:['1 barrinha Move ou Love Harts (40g)','15g whey protein com água ou leite'],notes:'Opção mais leve para quando não tem muito apetite.'},
+{name:'Barrinha de proteína + fruta',kcal:269,prot:15,carb:38,ing:['1 barrinha de proteína (150–250kcal, mínimo 10g prot)','1 banana ou outra porção de fruta'],notes:'Marcas: Nutrata, Bold Thin, Absurda da Putz, Amendo Power, WinStage, Pinc Bar.'},
+{name:'Pastel de air fryer com frango',kcal:280,prot:22,carb:23,ing:['2 massas médias de pastel (até 120kcal)','1 col sopa requeijão light (30g)','2 col sopa frango desfiado (40g)','1 fatia queijo mussarela (15–20g)'],link:'https://www.tiktok.com/@gabiborgesd/video/7426533403706526982'},
+{name:'Salgado de batata inglesa com frango',kcal:254,prot:25,carb:19,prep:'Congela bem',ing:['150g batata inglesa cozida e amassada','60g frango desfiado temperado','1 col sobremesa requeijão light (20g)','Opcional: 15g queijo mussarela para rechear'],link:'https://vt.tiktok.com/ZSx1t1o6F/'},
+{name:'Toast doce + frango desfiado',kcal:363,prot:26,carb:30,ing:['2 fatias pão integral (50g)','1 col pasta de amendoim ou doce de leite (15g)','Morangos frescos à vontade','40g frango desfiado com 15g requeijão ou 1 ovo','1 fatia queijo mussarela (15g)']},
+{name:'Crepioca de banana com mel e queijo',kcal:362,prot:22,carb:49,note:'Até 2×/semana',ing:['1 ovo','2 col sopa tapioca ou 1 tapioca + 1 farelo de aveia','15g whey protein','1 fatia mussarela (15g)','1 banana pequena (50g)','Canela a gosto','1 col sobremesa mel (12g)']},
+{name:'Cookie de pote',kcal:303,prot:18,carb:41,prep:'Prep fácil',ing:['2 col sopa aveia em flocos (20g)','1 banana média amassada (75g)','15g whey protein','15g chocolate 70% cacau ou 15g doce de leite','Leite ou iogurte desnatado a gosto','1 col chá fermento em pó'],link:'https://www.tiktok.com/@juliaottoni/video/7281407982540164358'},
+{name:'Overnight oats com whey e fruta',kcal:295,prot:22,carb:41,prep:'Prep noite anterior',ing:['150–200ml leite semidesnatado ou desnatado','1 col sopa chia em grãos (10g)','2 col sopa aveia em flocos (15g)','15g whey protein','1 porção de fruta'],link:'https://www.tiktok.com/@gioaguilera18/video/7189712183629073669'},
+{name:'Bolinho de microondas 2 (cacau + banana)',kcal:321,prot:29,carb:46,note:'Até 1×/semana',ing:['1 ovo','2 col sopa farelo de aveia (20g)','1 banana média (75g)','1 col sopa cacau em pó (10g)','Adoçante a gosto + 1 col chá fermento','Calda: 15g whey + 10g leite em pó desnatado + 5g cacau'],link:'https://www.instagram.com/reel/Criw-RKsOqG/'},
+{name:'Banana + whey + leite em pó + chocopops + pasta de amendoim',kcal:380,prot:24,carb:52,ing:['1 banana média amassada (75g)','15g whey protein','15g leite em pó desnatado','30g Chocopops Harts Nutrition','15g pasta de amendoim'],notes:'Amasse a banana, misture tudo e coloque os chocopops por cima.'},
+{name:'Iogurte natural + whey + fruta + chocopops',kcal:311,prot:22,carb:49,ing:['1 iogurte natural desnatado (até 170g)','15g whey protein','1 porção de fruta','30g Chocopops ou granola sem açúcar'],notes:'Alternativa: iogurte proteico mínimo 12g (Moo, Yorgus, YoPro, Do Tambo, Verdes Campos).'},
+],
+jantar:[
+{name:'Pizza no pão árabe com frango desfiado',kcal:366,prot:35,carb:37,ing:['1 pão sírio/árabe (até 150kcal)','4 col sopa frango desfiado ou carne moída (80g)','3–4 col sopa molho de tomate','20g queijo mussarela','Mínimo 2 vegetais'],notes:'Forno a 180°C até o queijo derreter.'},
+{name:'Pizza proteica (massa de ovo + aveia)',kcal:319,prot:35,carb:18,ing:['1 ovo','60g frango desfiado','20g farelo de aveia','20g queijo mussarela','1–2 col sopa molho de tomate','15g creme de ricota light','Vegetais à vontade'],link:'https://www.tiktok.com/@eujula/video/7215646644417645829'},
+{name:'Pizza com massa de crepioca',kcal:452,prot:34,carb:41,ing:['Massa: 1 ovo + 2 col sopa tapioca (40g) + 1 col sopa requeijão light (25g)','2–3 col sopa molho de tomate','25g queijo mussarela','60g frango desfiado ou carne moída','Vegetais picados']},
+{name:'Hambúrguer caseiro com salada',kcal:431,prot:32,carb:33,ing:['1 pão francês (50g) ou pão de hambúrguer fermentação natural (até 150kcal)','1 col sopa requeijão light (30g)','1 fatia queijo mussarela (15–20g)','1 bife de carne moída magra ou frango moído (80g)','Vegetais: folhas, tomate, cebola'],notes:'Monte com requeijão no lugar da maionese.'},
+{name:'Wrap proteico de frango com salada',kcal:365,prot:37,carb:26,ing:['2 fatias pão integral (50g) ou 1 Rap10 ou 1 pão francês','1 col sopa requeijão light (30g)','4 col sopa frango desfiado (80g)','1 fatia queijo mussarela (15–20g)','Vegetais: folhas verdes, tomate, cenoura ralada']},
+{name:'Omelete de frango com queijo e legumes',kcal:354,prot:34,carb:14,ing:['2 ovos','2 col sopa frango desfiado (40–50g)','Tomate cereja picadinho','1 fatia queijo mussarela (20g)','Opcional: 1 fatia pão integral','Temperinhos: cebolinha, alho-poró, orégano'],notes:'Rápida de fazer e com ótima proteína!'},
+{name:'Salada de macarrão com pesto e frango',kcal:294,prot:30,carb:23,ing:['1 pegador grande macarrão (80g cozido)','Vegetais à vontade','15g molho pesto ou 20g maionese light + limão/mostarda','3–4 col sopa frango grelhado (80g)'],notes:'Pode servir fria ou quentinha em bowl.',link:'https://www.tiktok.com/@nathaliacarnielli/video/7223481176000826629'},
+{name:'Crepioca recheada de frango com legumes',kcal:409,prot:35,carb:39,ing:['1 ovo','2 col sopa tapioca/goma (40g)','4 col sopa frango desfiado (80g)','1 col sopa creme de ricota ou requeijão light (30g)','Mínimo 2 vegetais no recheio'],link:'https://vt.tiktok.com/ZSxadWF4B/'},
+{name:'Pastel de air fryer com carne moída',kcal:384,prot:26,carb:30,ing:['2–3 massas médias de pastel (até 160kcal)','1 col sopa requeijão light (30g)','3 col sopa carne moída ou frango (60g)','1 fatia queijo mussarela (15–20g)'],link:'https://www.tiktok.com/@gabiborgesd/video/7426533403706526982'},
+{name:'Lasanha individual com frango',kcal:428,prot:43,carb:32,note:'Até 1×/semana',ing:['2 folhas massa para lasanha marca Renata','30g requeijão light ou creme de ricota','100g frango desfiado ou patinho moído','Molho de tomate à vontade','1 fatia queijo mussarela (20g)'],notes:'A opção com mais proteína do jantar!',link:'https://vt.tiktok.com/ZSxadWF4B/'},
+],
+};
+
+// ===== STATE =====
+let mainView='cardapio', activeTab='cafe', sortBy='prot';
+let selected={cafe:null,almoco:null,lanche:null,jantar:null};
+let favs=new Set(JSON.parse(localStorage.getItem('r-favs')||'[]'));
+let dayVisible=false, modalCat=null, modalIdx=null;
+let diaryDate=todayStr(), dmCat=null, dmMode='plan', dmSelIdx=null, dmPhoto=null;
+
+// ===== UTILS =====
+function saveFavs(){localStorage.setItem('r-favs',JSON.stringify([...favs]));}
+function rand(arr){return arr[Math.floor(Math.random()*arr.length)];}
+function todayStr(){const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
+function dateStr(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
+function sortItems(items){const s=[...items.map((it,i)=>({...it,_i:i}))];if(sortBy==='prot')s.sort((a,b)=>b.prot-a.prot);else if(sortBy==='kcal')s.sort((a,b)=>b.kcal-a.kcal);else s.sort((a,b)=>a.name.localeCompare(b.name,'pt'));return s;}
+
+// ===== DIARY STORAGE =====
+function getDiary(date){const all=JSON.parse(localStorage.getItem('r-diary')||'{}');return all[date]||{meals:{cafe:null,almoco:null,lanche:null,jantar:null},water:0,mood:null,note:''};}
+function saveDiary(date,data){const all=JSON.parse(localStorage.getItem('r-diary')||'{}');all[date]=data;const cut=new Date();cut.setDate(cut.getDate()-90);Object.keys(all).forEach(d=>{if(new Date(d+'T12:00:00')<cut)delete all[d];});localStorage.setItem('r-diary',JSON.stringify(all));}
+function getPhoto(date,cat){try{return localStorage.getItem('r-ph-'+date+'-'+cat)||null;}catch(e){return null;}}
+function savePhoto(date,cat,dataUrl){try{if(dataUrl)localStorage.setItem('r-ph-'+date+'-'+cat,dataUrl);else localStorage.removeItem('r-ph-'+date+'-'+cat);}catch(e){alert('Foto muito grande para salvar. Tente uma imagem menor.');}}
+function compressPhoto(file,cb){const img=new Image();const url=URL.createObjectURL(file);img.onload=()=>{const MAX=400;let w=img.width,h=img.height;if(w>h&&w>MAX){h=h*MAX/w;w=MAX;}else if(h>w&&h>MAX){w=w*MAX/h;h=MAX;}else if(w>MAX){w=MAX;h=MAX;}const c=document.createElement('canvas');c.width=w;c.height=h;c.getContext('2d').drawImage(img,0,0,w,h);URL.revokeObjectURL(url);cb(c.toDataURL('image/jpeg',0.5));};img.src=url;}
+
+// ===== MAIN VIEW =====
+function setMainView(v){
+  mainView=v;
+  document.getElementById('view-cardapio').classList.toggle('view-hidden',v!=='cardapio');
+  document.getElementById('view-diario').classList.toggle('view-hidden',v!=='diario');
+  document.getElementById('nb-cardapio').classList.toggle('on',v==='cardapio');
+  document.getElementById('nb-diario').classList.toggle('on',v==='diario');
+  document.querySelector('.fab').style.display=v==='cardapio'?'':'none';
+  if(v==='diario')renderDiary();
+}
+
+// ===== CARDÁPIO =====
+function renderTabs(){document.getElementById('tabs').innerHTML=TABS_CFG.map(t=>`<button class="tab${activeTab===t.key?' on':''}" onclick="setTab('${t.key}')">${t.label}</button>`).join('');}
+function renderGrid(){
+  const el=document.getElementById('grid');
+  let items;
+  if(activeTab==='favs'){items=[];CATS.forEach(cat=>DATA[cat].forEach((it,i)=>{if(favs.has(cat+'-'+i))items.push({...it,_cat:cat,_i:i,_multi:true});}));}
+  else{items=sortItems(DATA[activeTab]).map(it=>({...it,_cat:activeTab}));}
+  if(!items.length){el.innerHTML='<div class="empty"><div class="ico">❤️</div><p>Sem favoritos ainda.<br>Toque no 🤍 em qualquer prato.</p></div>';return;}
+  el.innerHTML=items.map(it=>{const cat=it._cat,origIdx=it._i!==undefined?it._i:DATA[cat].findIndex(x=>x.name===it.name);const fk=cat+'-'+origIdx;const isFav=favs.has(fk),isSel=selected[cat]&&selected[cat].name===it.name;
+  return `<div class="card${isSel?' sel':''}" onclick="openRecipe('${cat}',${origIdx})"><button class="fav-btn" onclick="toggleFav(event,'${cat}',${origIdx})">${isFav?'❤️':'🤍'}</button>${it._multi?`<div class="card-cat-lbl">${LABELS[cat]}</div>`:''}<div class="card-name">${it.name}</div><div class="badges">${it.note?`<span class="bdg bw">⚠️ ${it.note}</span>`:''}${it.prep?`<span class="bdg bp">⏱ ${it.prep}</span>`:''}</div><div class="macros"><span class="mac mk">🔥 ${it.kcal}</span><span class="mac mp">💪 ${it.prot}g</span><span class="mac mc">🌾 ${it.carb}g</span></div><div class="card-hint">Toque para ver a receita →</div></div>`;}).join('');}
+function renderDay(){
+  const p=document.getElementById('day-panel');const filled=CATS.filter(c=>selected[c]);
+  p.className=(filled.length>0||dayVisible)?'open':'';
+  if(!filled.length&&!dayVisible)return;
+  document.getElementById('day-rows').innerHTML=CATS.map(cat=>{const it=selected[cat];if(!it)return `<div class="day-row" style="opacity:.4"><span class="day-row-cat">${LABELS[cat]}</span><span class="day-row-name" style="color:var(--tx3)">Não selecionado</span></div>`;return `<div class="day-row"><span class="day-row-cat">${LABELS[cat]}</span><span class="day-row-name">${it.name}</span><button class="swap-btn" onclick="swapMeal('${cat}')">↻</button></div>`;}).join('');
+  const tK=CATS.reduce((s,c)=>s+(selected[c]?selected[c].kcal:0),0);const tP=CATS.reduce((s,c)=>s+(selected[c]?selected[c].prot:0),0);const tC=CATS.reduce((s,c)=>s+(selected[c]?selected[c].carb:0),0);
+  const pc=tP>=120?'pg-ok':tP>=100?'pg-warn':'pg-low';const pm=tP>=120?'✓ Meta!':tP>=100?`Falta ${120-tP}g`:`${120-tP}g abaixo`;
+  document.getElementById('day-totals').innerHTML=`<div class="dtot">🔥 ${tK} <span>kcal</span></div><div class="dtot">💪 ${tP}g <span class="${pc}">${pm}</span></div><div class="dtot">🌾 ${tC}g</div><div class="day-act"><button class="dbtn" onclick="clearDay()">Limpar</button><button class="dbtn pri" onclick="sortearDia()">🎲 Novo sorteio</button></div>`;}
+function openRecipe(cat,idx){
+  const it=DATA[cat][idx];modalCat=cat;modalIdx=idx;
+  document.getElementById('m-name').textContent=it.name;
+  const fk=cat+'-'+idx,isFav=favs.has(fk),isSel=selected[cat]&&selected[cat].name===it.name;
+  document.getElementById('m-fav-btn').textContent=isFav?'❤️ Favorito':'🤍 Favoritar';
+  document.getElementById('m-sel-btn').textContent=isSel?'✓ Selecionado':'Selecionar para hoje';
+  document.getElementById('m-sel-btn').style.background=isSel?'#888':'var(--g)';
+  let html=`<div class="sheet-cat">${LABELS[cat]} · ${it.kcal} kcal</div><div class="macros-row"><span class="mac mp">💪 ${it.prot}g proteína</span><span class="mac mc">🌾 ${it.carb}g carb</span><span class="mac mk">🔥 ${it.kcal} kcal</span></div>`;
+  if(it.note)html+=`<div class="bdg bw" style="display:inline-block;margin-bottom:10px">⚠️ ${it.note}</div><br>`;
+  if(it.prep)html+=`<div class="bdg bp" style="display:inline-block;margin-bottom:10px">⏱ ${it.prep}</div><br>`;
+  html+=`<div class="ing-title">📋 Ingredientes</div><ul class="ing-list">${(it.ing||[]).map(i=>`<li>${i}</li>`).join('')}</ul>`;
+  if((it.ing||[]).some(i=>/fruta/i.test(i))){
+    html+=`<details class="notes-box" style="background:var(--bg);color:var(--tx2);cursor:pointer"><summary style="font-weight:700;color:var(--g)">🍎 Lista de substituição de frutas (toque para abrir)</summary><ul class="ing-list" style="margin-top:8px;margin-bottom:0">${FRUIT_LIST.map(f=>`<li>${f}</li>`).join('')}</ul></details>`;
+  }
+  if(it.notes)html+=`<div class="notes-box"><strong>Dica</strong>${it.notes}</div>`;
+  if(it.link)html+=`<a class="link-btn" href="${it.link}" target="_blank">📱 Ver modo de preparo</a>`;
+  document.getElementById('m-body').innerHTML=html;
+  document.getElementById('overlay-recipe').classList.add('open');document.body.style.overflow='hidden';}
+function closeRecipe(){document.getElementById('overlay-recipe').classList.remove('open');document.body.style.overflow='';}
+function maybeCloseRecipe(e){if(e.target===document.getElementById('overlay-recipe'))closeRecipe();}
+function modalToggleFav(){if(modalCat===null)return;const fk=modalCat+'-'+modalIdx;favs.has(fk)?favs.delete(fk):favs.add(fk);saveFavs();openRecipe(modalCat,modalIdx);renderGrid();}
+function modalSelect(){if(modalCat===null)return;const it=DATA[modalCat][modalIdx];selected[modalCat]=selected[modalCat]&&selected[modalCat].name===it.name?null:it;openRecipe(modalCat,modalIdx);renderGrid();renderDay();}
+function setTab(t){activeTab=t;renderTabs();renderGrid();}
+function setSort(s){sortBy=s;['prot','kcal','nome'].forEach(x=>document.getElementById('s-'+x).classList.toggle('on',x===s));renderGrid();}
+function sortearDia(){CATS.forEach(cat=>{selected[cat]=rand(DATA[cat]);});dayVisible=true;renderGrid();renderDay();document.getElementById('day-panel').scrollIntoView({behavior:'smooth',block:'nearest'});}
+function swapMeal(cat){const cur=selected[cat];let next;do{next=rand(DATA[cat]);}while(DATA[cat].length>1&&next.name===cur.name);selected[cat]=next;renderGrid();renderDay();}
+function clearDay(){CATS.forEach(c=>selected[c]=null);dayVisible=false;renderGrid();renderDay();}
+function toggleDay(){dayVisible=!dayVisible;renderDay();if(dayVisible)document.getElementById('day-panel').scrollIntoView({behavior:'smooth',block:'nearest'});}
+function toggleFav(e,cat,idx){e.stopPropagation();const fk=cat+'-'+idx;favs.has(fk)?favs.delete(fk):favs.add(fk);saveFavs();renderGrid();}
+
+// ===== DIARY =====
+function navigateDay(delta){
+  const d=new Date(diaryDate+'T12:00:00');d.setDate(d.getDate()+delta);
+  if(d>new Date())return;
+  diaryDate=dateStr(d);renderDiary();}
+function renderDiary(){
+  const today=todayStr();const isToday=diaryDate===today;
+  const d=new Date(diaryDate+'T12:00:00');
+  document.getElementById('d-label').textContent=isToday?'Hoje':diaryDate===dateStr(new Date(Date.now()-86400000))?'Ontem':d.toLocaleDateString('pt-BR',{weekday:'long',day:'numeric',month:'short'});
+  document.getElementById('d-sub').textContent=d.toLocaleDateString('pt-BR',{day:'numeric',month:'long',year:'numeric'});
+  document.getElementById('d-next').style.opacity=isToday?'0.3':'1';
+  document.getElementById('d-next').disabled=isToday;
+  const diary=getDiary(diaryDate);
+  // water
+  const w=diary.water||0;document.getElementById('water-val').textContent=w%1===0?w:w.toFixed(2).replace('.',',');
+  document.getElementById('water-bar').style.width=Math.min(w/3*100,100)+'%';
+  // meals
+  document.getElementById('d-meals').innerHTML=CATS.map(cat=>{
+    const m=diary.meals[cat];const photo=getPhoto(diaryDate,cat);
+    if(!m)return `<div class="mslot" onclick="openDm('${cat}')"><div class="mslot-cat">${LABELS[cat]}</div><div class="mslot-body"><div class="mslot-empty"><div class="mslot-plus">+</div>Toque para registrar</div></div></div>`;
+    const isLuxo=m.luxo;
+    return `<div class="mslot" onclick="openDm('${cat}')">
+      <div class="mslot-cat">${LABELS[cat]}</div>
+      <div class="mslot-body">
+        ${isLuxo?'<div class="luxo-tag">✨ Refeição luxo</div>':''}
+        <div class="mslot-name">${m.name}</div>
+        <div class="mslot-macros">
+          ${m.prot?`<span class="mac mp" style="font-size:11px">💪 ${m.prot}g</span>`:''}
+          ${m.kcal?`<span class="mac mk" style="font-size:11px">🔥 ${m.kcal}</span>`:''}
+        </div>
+      </div>
+      ${photo?`<img class="mslot-photo" src="${photo}" alt="foto">`:''}
+    </div>`;
+  }).join('');
+  // mood
+  ['😊','😐','😔'].forEach(m=>{document.getElementById('mood-'+m).classList.toggle('on',diary.mood===m);});
+  // note
+  document.getElementById('d-note').value=diary.note||'';
+  renderWeekly();}
+
+function updateWater(delta){
+  const diary=getDiary(diaryDate);
+  diary.water=Math.max(0,Math.min(5,Math.round((diary.water+delta)*100)/100));
+  saveDiary(diaryDate,diary);renderDiary();}
+
+function setMood(m){const diary=getDiary(diaryDate);diary.mood=diary.mood===m?null:m;saveDiary(diaryDate,diary);renderDiary();}
+function saveNote(){const diary=getDiary(diaryDate);diary.note=document.getElementById('d-note').value;saveDiary(diaryDate,diary);}
+
+function renderWeekly(){
+  const el=document.getElementById('week-grid');const today=todayStr();
+  let html='';
+  for(let i=6;i>=0;i--){
+    const d=new Date();d.setDate(d.getDate()-i);const ds=dateStr(d);
+    const diary=getDiary(ds);
+    const tP=CATS.reduce((s,c)=>s+(diary.meals[c]&&diary.meals[c].prot?diary.meals[c].prot:0),0);
+    const hasData=CATS.some(c=>diary.meals[c]);
+    const cls=!hasData?'none':tP>=120?'ok':tP>=100?'warn':'low';
+    const isToday=ds===today;const isActive=ds===diaryDate;
+    const dow=WEEKDAYS[d.getDay()];
+    html+=`<div class="wday" onclick="diaryDate='${ds}';renderDiary()">
+      <div class="wday-lbl">${dow}</div>
+      <div class="wdot ${cls}${isActive?' today':''}">${hasData?tP+'g':''}</div>
+      <div class="wday-prot">${d.getDate()}/${d.getMonth()+1}</div>
+    </div>`;
+  }
+  el.innerHTML=html;}
+
+// DIARY MEAL MODAL
+function openDm(cat){
+  dmCat=cat;dmPhoto=null;dmSelIdx=null;
+  const diary=getDiary(diaryDate);const current=diary.meals[cat];
+  document.getElementById('dm-title').textContent=`${LABELS[cat]} — ${new Date(diaryDate+'T12:00:00').toLocaleDateString('pt-BR',{day:'numeric',month:'short'})}`;
+  // photo
+  document.getElementById('dm-photo-input').value='';
+  document.getElementById('dm-preview').style.display='none';
+  const existingPhoto=getPhoto(diaryDate,cat);
+  if(existingPhoto){document.getElementById('dm-preview').src=existingPhoto;document.getElementById('dm-preview').style.display='block';document.getElementById('dm-photo-label').textContent='📷 Trocar foto';dmPhoto=existingPhoto;}
+  else{document.getElementById('dm-photo-label').textContent='📷 Adicionar foto do prato';}
+  // clear btn
+  document.getElementById('dm-clear-btn').style.display=current?'block':'none';
+  // set initial mode
+  const initMode=current&&current.luxo?'luxo':'plan';
+  setDmTab(initMode);
+  // if existing plan meal, pre-select it
+  if(current&&!current.luxo){
+    const idx=DATA[cat].findIndex(x=>x.name===current.name);
+    if(idx>=0){dmSelIdx=idx;setTimeout(()=>{const items=document.querySelectorAll('.dm-item');if(items[idx])items[idx].classList.add('on');},50);}
+  }
+  // if existing luxo
+  if(current&&current.luxo){
+    document.getElementById('dm-luxo-name').value=current.name||'';
+    document.getElementById('dm-luxo-kcal').value=current.kcal||'';
+    document.getElementById('dm-luxo-prot').value=current.prot||'';
+  }
+  document.getElementById('overlay-dm').classList.add('open');document.body.style.overflow='hidden';}
+
+function closeDm(){document.getElementById('overlay-dm').classList.remove('open');document.body.style.overflow='';}
+function maybeCloseDm(e){if(e.target===document.getElementById('overlay-dm'))closeDm();}
+
+function setDmTab(mode){
+  dmMode=mode;
+  document.getElementById('dm-tab-plan').classList.toggle('on',mode==='plan');
+  document.getElementById('dm-tab-luxo').classList.toggle('on',mode==='luxo');
+  document.getElementById('dm-plan-content').style.display=mode==='plan'?'':'none';
+  document.getElementById('dm-luxo-content').style.display=mode==='luxo'?'':'none';
+  if(mode==='plan'){
+    const items=DATA[dmCat];
+    document.getElementById('dm-plan-list').innerHTML=items.map((it,i)=>`<div class="dm-item${dmSelIdx===i?' on':''}" onclick="selectDmItem(${i})"><div class="dm-item-name">${it.name}</div><div class="dm-item-macs">💪 ${it.prot}g prot &nbsp;·&nbsp; 🔥 ${it.kcal} kcal</div></div>`).join('');
+  } else {
+    if(!document.getElementById('dm-luxo-name').value){document.getElementById('dm-luxo-kcal').value='';document.getElementById('dm-luxo-prot').value='';}
+  }}
+
+function selectDmItem(idx){
+  dmSelIdx=idx;
+  document.querySelectorAll('.dm-item').forEach((el,i)=>el.classList.toggle('on',i===idx));}
+
+function handleDmPhoto(input){
+  if(!input.files||!input.files[0])return;
+  compressPhoto(input.files[0],(dataUrl)=>{
+    dmPhoto=dataUrl;
+    document.getElementById('dm-preview').src=dataUrl;document.getElementById('dm-preview').style.display='block';
+    document.getElementById('dm-photo-label').textContent='📷 Trocar foto';});}
+
+function saveDiaryMeal(){
+  const diary=getDiary(diaryDate);
+  if(dmMode==='plan'){
+    if(dmSelIdx===null){alert('Selecione um prato do plano.');return;}
+    const it=DATA[dmCat][dmSelIdx];
+    diary.meals[dmCat]={name:it.name,kcal:it.kcal,prot:it.prot,luxo:false};
+  } else {
+    const name=document.getElementById('dm-luxo-name').value.trim();
+    if(!name){alert('Digite o nome do que você comeu.');return;}
+    const kcal=parseInt(document.getElementById('dm-luxo-kcal').value)||null;
+    const prot=parseInt(document.getElementById('dm-luxo-prot').value)||null;
+    diary.meals[dmCat]={name,kcal,prot,luxo:true};
+  }
+  saveDiary(diaryDate,diary);
+  savePhoto(diaryDate,dmCat,dmPhoto);
+  closeDm();renderDiary();}
+
+function clearDiaryMeal(){
+  const diary=getDiary(diaryDate);
+  diary.meals[dmCat]=null;
+  saveDiary(diaryDate,diary);
+  savePhoto(diaryDate,dmCat,null);
+  closeDm();renderDiary();}
+
+// ===== INIT =====
+renderTabs();renderGrid();renderDay();
+</script>
+</body>
+</html>
